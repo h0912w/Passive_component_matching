@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  push:
+    branches: ['*']
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Tier 1: Mock 테스트 — API 키 불필요, 항상 실행
+  test-mock:
+    name: Tier 1 - Mock Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - run: npm test
+
+  # Tier 2: Live API 테스트 — Secrets에서 키 주입
+  test-live:
+    name: Tier 2 - Live API Tests
+    runs-on: ubuntu-latest
+    needs: test-mock  # mock 테스트 통과 후에만 실행
+    if: github.event_name == 'push'  # PR에서는 Secrets 접근 불가하므로 push만
+    env:
+      MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
+      DIGIKEY_CLIENT_ID: ${{ secrets.DIGIKEY_CLIENT_ID }}
+      DIGIKEY_CLIENT_SECRET: ${{ secrets.DIGIKEY_CLIENT_SECRET }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+      - name: Run live tests
+        run: npm run test:live
+      - name: Upload failure feedback
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-failure-feedback
+          path: tests/feedback/last-failure.json
+          if-no-files-found: ignore

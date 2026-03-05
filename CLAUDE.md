@@ -179,6 +179,7 @@ https://script.google.com/home/projects/{SCRIPT_ID}/edit
 |------|----------|--------------|
 | **Apps Script (배포)** | 에디터 > 프로젝트 설정 > 스크립트 속성 | ❌ 포함 안 됨 |
 | **로컬 Node.js 테스트** | `.env` 파일 | ❌ `.gitignore`로 차단 |
+| **GitHub Actions (CI)** | Repository Secrets | ❌ 암호화 저장, 로그에 마스킹 |
 | **GitHub 소스코드** | 키 없음 — 읽기 함수만 존재 | ✅ 안전 |
 
 ### 로컬 테스트용 .env 설정
@@ -192,6 +193,29 @@ MOUSER_API_KEY=실제키입력
 DIGIKEY_CLIENT_ID=실제ID입력
 DIGIKEY_CLIENT_SECRET=실제시크릿입력
 ```
+
+### GitHub Actions Secrets 설정 (CI 자동 테스트용)
+
+> push할 때마다 GitHub Actions가 mock + live 테스트를 자동 실행한다.
+
+1. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
+2. **"New repository secret"** 클릭 후 아래 항목 등록:
+
+| Secret 이름 | 값 |
+|-------------|-----|
+| `MOUSER_API_KEY` | 발급받은 Mouser API 키 |
+| `DIGIKEY_CLIENT_ID` | 발급받은 Digikey Client ID |
+| `DIGIKEY_CLIENT_SECRET` | 발급받은 Digikey Client Secret |
+
+워크플로우 흐름:
+```
+git push → Tier 1 (mock 테스트) → 통과 → Tier 2 (live API 테스트, Secrets 키 사용)
+                                → 실패 → Tier 2 스킵
+```
+
+- Secrets는 암호화 저장되며 로그에 `***`로 마스킹됨
+- PR에서는 외부 기여자의 Secrets 접근을 방지하기 위해 live 테스트를 스킵
+- 실패 시 `tests/feedback/last-failure.json`이 Artifact로 업로드됨
 
 ---
 
@@ -222,6 +246,9 @@ DIGIKEY_CLIENT_SECRET=실제시크릿입력
 ```
 Passive_component_matching/
 ├── CLAUDE.md                          # 이 파일
+├── .github/
+│   └── workflows/
+│       └── test.yml                   # GitHub Actions CI (mock + live 자동 테스트)
 ├── .claude/
 │   └── skills/
 │       ├── resistor-parsing.md        # 저항값 파싱 스킬

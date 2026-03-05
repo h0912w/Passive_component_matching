@@ -190,3 +190,4 @@ node tests/test-mouser-live.js     # Mouser만 단독 실행
 | 2026-03-05 | 세션 컨텍스트 문서(이 파일) 생성 |
 | 2026-03-05 | CLAUDE.md + session-context.md 최종 업데이트: README checkbox 수정, 테스트 가능성 분석 2-tier 반영, 파일 구조에 live test 파일/package.json 추가, 테스트 명령어 완성, 수동 확인 항목 수정 |
 | 2026-03-05 | GitHub claude/resistor-lookup-tool-2ewOv 브랜치에 push 완료 |
+| 2026-03-05 | GitHub Actions 워크플로우 추가: push 시 Tier1(mock) → Tier2(live, Secrets 키 주입) 자동 실행 |
