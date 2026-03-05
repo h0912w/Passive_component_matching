@@ -1,0 +1,15 @@
+{
+  "name": "passive-component-matching",
+  "version": "1.0.0",
+  "description": "저항 Value값으로 Digikey/Mouser 부품 자동 매칭",
+  "scripts": {
+    "test":      "node tests/run-all-tests.js",
+    "test:live": "node tests/run-all-tests.js --live"
+  },
+  "devDependencies": {
+    "dotenv": "^16.0.0"
+  },
+  "engines": {
+    "node": ">=16"
+  }
+}
