@@ -254,13 +254,19 @@ Passive_component_matching/
 │   ├── test-mouser-client.js          # MouserClient 테스트 (⚠️ mock HTTP)
 │   ├── test-digikey-client.js         # DigikeyClient 테스트 (⚠️ mock HTTP)
 │   ├── test-integration.js            # 전체 파이프라인 통합 테스트 (mock API)
+│   ├── test-mouser-live.js            # Mouser 실제 API 호출 테스트 (--live 전용)
+│   ├── test-digikey-live.js           # Digikey 실제 API 호출 테스트 (--live 전용)
 │   ├── mocks/
 │   │   ├── apps-script-mocks.js       # PropertiesService, CacheService, UrlFetchApp mock
 │   │   └── api-responses.json         # Mouser/Digikey mock 응답 데이터
 │   └── feedback/
 │       └── last-failure.json          # 마지막 실패 정보 (피드백 루프용)
-└── docs/
-    └── package-size-table.md          # 패키지 크기 변환표
+├── docs/
+│   ├── package-size-table.md          # 패키지 크기 변환표
+│   └── session-context.md             # 세션 이력 & 현재 상태 (새 채팅창 필독)
+├── .env.example                       # API 키 템플릿 (실제 값 없음, Git 포함)
+├── .gitignore                         # .env, node_modules 차단
+└── package.json                       # npm test / npm run test:live
 ```
 
 ---
@@ -315,22 +321,24 @@ if (typeof module !== 'undefined' && module.exports) {
 
 ### 테스트 불가 영역 (설계적 한계)
 
-- **실제 API 호출 자체**: Mouser/Digikey 서버에 대한 실제 HTTP 통신은 Node.js 테스트에서 수행 안 함 (실제 API 키 노출 위험 + 네트워크 의존성). Mock 응답으로 로직 검증만 수행.
 - **Apps Script 배포 후 동작**: `doGet()`, `ContentService` 등 배포 환경 전용 동작은 실제 Apps Script 에디터의 "실행" 버튼으로만 확인 가능.
+- **Blogger iframe 연동**: 브라우저에서 직접 확인 필요.
 
 ### 결론: TestRunner 에이전트의 실제 테스트 범위
 
 ```
-Node.js로 자동 검증 가능 (80%)     │  수동 확인 필요 (20%)
-────────────────────────────────────┼─────────────────────────────
-ValueParser 파싱 정확도             │  실제 Mouser API 응답 구조
-PackageConverter 변환 정확도        │  실제 Digikey API 응답 구조
-StockRanker 재고 선정 로직          │  Apps Script doGet() 동작
-OutputFormatter 6열 포맷            │  Blogger iframe 연동
-ErrorHandler 메시지 생성            │
-Config/Cache/Client DI 로직 (mock)  │
-전체 파이프라인 통합 테스트 (mock)  │
+Node.js 자동 검증 — Tier 1 (mock)  │  Node.js 자동 검증 — Tier 2 (live)  │  수동 확인 필요
+────────────────────────────────────┼──────────────────────────────────────┼──────────────────
+ValueParser 파싱 정확도             │  실제 Mouser API 응답 구조           │  Apps Script doGet() 동작
+PackageConverter 변환 정확도        │  실제 Digikey OAuth 토큰 발급        │  Blogger iframe 연동
+StockRanker 재고 선정 로직          │  실제 Digikey 키워드 검색 응답       │
+OutputFormatter 6열 포맷            │  (npm run test:live, .env 키 필요)   │
+ErrorHandler 메시지 생성            │                                      │
+Config/Cache/Client DI 로직 (mock)  │                                      │
+전체 파이프라인 통합 테스트 (mock)  │                                      │
 ```
+
+> **Tier 2 구현 방법**: live 테스트 파일(`test-mouser-live.js`, `test-digikey-live.js`)은 Apps Script의 `UrlFetchApp` 대신 Node.js 내장 `https` 모듈을 직접 사용하여 실제 API 서버에 HTTP 요청을 보낸다. `.env` 파일의 키를 `dotenv`로 로딩해 인증한다.
 
 ---
 
@@ -469,7 +477,7 @@ TestRunner → 전체 테스트 재실행으로 회귀 확인
 ### Phase 1: 기반 (현재 — 계획 문서)
 - [x] CLAUDE.md 생성
 - [x] Skills 문서 생성
-- [ ] README.md 삭제
+- [x] README.md 삭제
 
 ### Phase 2: 핵심 파싱
 - [ ] PackageConverter.gs
@@ -499,8 +507,16 @@ TestRunner → 전체 테스트 재실행으로 회귀 확인
 ## 테스트 방법
 
 ```bash
-# 전체 테스트 실행 (TestRunner 에이전트 역할)
-node tests/run-all-tests.js
+# 최초 1회: 의존성 설치
+npm install
+
+# Tier 1: mock 테스트 전체 실행 (API 키 불필요)
+npm test
+# 또는: node tests/run-all-tests.js
+
+# Tier 2: 실제 API 호출 포함 (.env에 키 필요)
+npm run test:live
+# 또는: node tests/run-all-tests.js --live
 
 # 개별 파일 테스트
 node tests/test-value-parser.js
@@ -508,6 +524,10 @@ node tests/test-package-converter.js
 node tests/test-stock-ranker.js
 node tests/test-output-formatter.js
 node tests/test-integration.js
+
+# 실제 API만 단독 실행
+node tests/test-mouser-live.js
+node tests/test-digikey-live.js
 
 # 실패 시 피드백 파일 확인
 cat tests/feedback/last-failure.json
@@ -551,6 +571,7 @@ Total: 42/42 passed ✅
 4. 3회 실패 시 사람에게 에스컬레이션
 
 ### 수동 확인 필요 항목 (TestRunner 범위 외)
-- 실제 Mouser API 키로 HTTP 호출 결과 확인 → Apps Script 에디터 "실행" 버튼
 - Apps Script 배포 후 `doGet()` 동작 확인 → 웹 앱 URL 직접 접근
 - Blogger iframe 연동 확인 → 브라우저에서 직접 확인
+
+> **참고**: 실제 Mouser/Digikey API HTTP 호출 검증은 `npm run test:live` 로 자동 가능 (수동 불필요)
