@@ -13,18 +13,21 @@
 - [x] 전체 아키텍처 설계
 - [x] CLAUDE.md (프로젝트 가이드 메인 문서)
 - [x] Skills 문서 4개 (.claude/skills/)
-- [x] Config.gs (API 키 읽기 함수 — Mouser만)
+- [x] Config.gs (API 키 읽기 함수 — Mouser + GLM)
 - [x] run-all-tests.js (TestRunner, mock 모드 + --live 모드)
 - [x] tests/mocks/apps-script-mocks.js (PropertiesService/CacheService/UrlFetchApp mock)
 - [x] tests/test-mouser-live.js (실제 Mouser API 호출 테스트)
 - [x] .gitignore, .env.example, package.json
 - [x] Digikey 제거 → Mouser API 단일 사용으로 전환
 - [x] PackageListBuilder 에이전트 추가 (Mouser API로 패키지 리스트 동적 추출)
+- [x] ZhipuAI GLM API 통합 — NlpParser + GlmClient 에이전트 추가
 
 **아직 없는 것 (다음에 할 일)**:
 - [ ] PackageConverter.gs + 테스트
 - [ ] ValueParser.gs + 테스트
+- [ ] NlpParser.gs + 테스트 (GLM 기반 자연어 파싱)
 - [ ] MouserClient.gs + 테스트
+- [ ] GlmClient.gs + 테스트 (ZhipuAI GLM API 클라이언트)
 - [ ] PackageListBuilder.gs + 테스트
 - [ ] StockRanker.gs + 테스트
 - [ ] OutputFormatter.gs + 테스트
@@ -47,7 +50,7 @@
 - **프론트엔드**: Google Blogger 글에 직접 삽입하는 HTML/CSS/JS
 - **백엔드**: Google Apps Script (doGet → JSON API)
   - 이유: Blogger와 같은 Google 생태계, 별도 서버 불필요, 무료
-- **외부 API**: Mouser API v2 (현재 키 보유)
+- **외부 API**: Mouser API v2 (현재 키 보유) + ZhipuAI GLM API (자연어 파싱용)
 
 ### 3. API 전환 이력
 - 초기: Digikey + Mouser 이중 API 사용 계획
@@ -75,16 +78,20 @@
 |-----------|------------|------------|----------|------------|-------------|
 - 사용자가 SW 추출 결과를 눈으로 더블체크할 수 있도록 설계
 
-### 8. 파싱 전략
-- **저항값**: `R`, `k`, `K`, `M` 단위 포함 토큰 감지
-- **패키지**: PackageListBuilder가 Mouser API에서 추출한 패키지 목록과 매칭
-- **오차**: `%` 포함 토큰 감지
-- **순서 무관**: 어떤 순서로 입력해도 타입 자동 감지
-- **구분자**: 공백, `/`, `_`, 탭 모두 지원
+### 8. 파싱 전략 (2단계: 정규식 + 자연어)
+- **1단계 ValueParser (정규식)**: 구조화된 입력 (`1k 0402 5%`) 처리
+  - **저항값**: `R`, `k`, `K`, `M` 단위 포함 토큰 감지
+  - **패키지**: PackageListBuilder가 Mouser API에서 추출한 패키지 목록과 매칭
+  - **오차**: `%` 포함 토큰 감지
+  - **순서 무관**: 어떤 순서로 입력해도 타입 자동 감지
+  - **구분자**: 공백, `/`, `_`, 탭 모두 지원
+- **2단계 NlpParser (GLM 폴백)**: ValueParser 실패 시 자연어 입력을 GLM으로 처리
+  - 예: `"1킬로옴 0402 5퍼센트"` → GLM이 구조화 JSON으로 변환
+  - ZhipuAI GLM-4-Flash 모델 사용 (빠른 응답, 비용 효율)
 
 ### 9. 테스트 전략 (2-Tier)
 - **Tier 1** (`npm test`): Mock 테스트, API 키 불필요, 항상 실행
-- **Tier 2** (`npm run test:live`): 실제 Mouser API 호출, `.env`의 키 필요
+- **Tier 2** (`npm run test:live`): 실제 Mouser + GLM API 호출, `.env`의 키 필요
   - Apps Script ≠ Node.js 환경 차이 때문에 2단계 필요
   - UrlFetchApp이 Node.js에 없으므로 live 테스트는 Node.js `https` 모듈 직접 사용
 
@@ -98,23 +105,26 @@
 | 서비스 | 상태 | 저장 위치 |
 |--------|------|---------|
 | Mouser API Key | ✅ 보유 | Apps Script 스크립트 속성 + 로컬 .env (Git 제외) |
+| ZhipuAI GLM API Key | ❌ 미보유 | Apps Script 스크립트 속성 + 로컬 .env (Git 제외) |
 
 ---
 
-## 서브에이전트 구성 (10개)
+## 서브에이전트 구성 (12개)
 
 | # | 이름 | 파일 | 역할 | 구현 상태 |
 |---|------|------|------|---------|
-| 1 | ValueParser | ValueParser.gs | R/k/M 단위로 저항값, 패키지목록으로 패키지, %로 오차 추출 | ❌ |
-| 2 | PackageListBuilder | PackageListBuilder.gs | Mouser API로 패키지 리스트 동적 추출 & 정리 | ❌ |
-| 3 | PackageConverter | PackageConverter.gs | Metric ↔ Imperial 변환 | ❌ |
-| 4 | MouserClient | MouserClient.gs | Mouser API Key + 키워드 검색 | ❌ |
-| 5 | StockRanker | StockRanker.gs | 재고 최다 부품 선정, 재고 0 제외 | ❌ |
-| 6 | OutputFormatter | OutputFormatter.gs | 6열 테이블 + MPN 복사용 목록 | ❌ |
-| 7 | CacheManager | CacheManager.gs | CacheService로 API 응답 캐싱 (TTL 1h) + 패키지 리스트 캐싱 (TTL 24h) | ❌ |
-| 8 | ErrorHandler | ErrorHandler.gs | 파싱 실패/API 에러 메시지 생성 | ❌ |
-| 9 | PackageListCache | Code.gs에서 트리거 | 초기 호출 시 PackageListBuilder 자동 실행 | ❌ |
-| 10 | TestRunner | tests/run-all-tests.js | 자동 테스트 + 실패 시 피드백 루프 | ✅ 완료 |
+| 1 | ValueParser | ValueParser.gs | 정규식 기반: R/k/M 단위로 저항값, 패키지, 오차 추출 | ❌ |
+| 2 | NlpParser | NlpParser.gs | GLM 기반: 자연어 입력을 구조화 데이터로 변환 (ValueParser 폴백) | ❌ |
+| 3 | PackageListBuilder | PackageListBuilder.gs | Mouser API로 패키지 리스트 동적 추출 & 정리 | ❌ |
+| 4 | PackageConverter | PackageConverter.gs | Metric ↔ Imperial 변환 | ❌ |
+| 5 | MouserClient | MouserClient.gs | Mouser API Key + 키워드 검색 | ❌ |
+| 6 | GlmClient | GlmClient.gs | ZhipuAI GLM API Bearer Token + chat completions | ❌ |
+| 7 | StockRanker | StockRanker.gs | 재고 최다 부품 선정, 재고 0 제외 | ❌ |
+| 8 | OutputFormatter | OutputFormatter.gs | 6열 테이블 + MPN 복사용 목록 | ❌ |
+| 9 | CacheManager | CacheManager.gs | API 응답 캐싱 (TTL 1h) + 패키지 리스트 (24h) + NLP 응답 캐싱 | ❌ |
+| 10 | ErrorHandler | ErrorHandler.gs | 파싱 실패/API 에러 메시지 생성 | ❌ |
+| 11 | PackageListCache | Code.gs에서 트리거 | 초기 호출 시 PackageListBuilder 자동 실행 | ❌ |
+| 12 | TestRunner | tests/run-all-tests.js | 자동 테스트 + 실패 시 피드백 루프 | ✅ 완료 |
 
 ---
 
@@ -132,7 +142,7 @@
 7. npm test → 전체 통과 확인
 ```
 
-다음 단계 이후: MouserClient.gs → PackageListBuilder.gs → StockRanker.gs
+다음 단계 이후: MouserClient.gs → GlmClient.gs → NlpParser.gs → PackageListBuilder.gs → StockRanker.gs
 
 ---
 
@@ -143,11 +153,11 @@ Passive_component_matching/
 ├── CLAUDE.md                          ← 메인 가이드 (항상 먼저 읽을 것)
 ├── .claude/skills/
 │   ├── resistor-parsing.md            ← 파싱 규칙 상세
-│   ├── api-integration.md             ← Mouser API 엔드포인트
+│   ├── api-integration.md             ← Mouser + GLM API 엔드포인트
 │   ├── blogger-frontend.md            ← Blogger 삽입 방법
 │   └── testing.md                     ← TestRunner 상세, mock 패턴
 ├── apps-script/
-│   └── Config.gs                      ← PropertiesService 키 읽기 (Mouser만)
+│   └── Config.gs                      ← PropertiesService 키 읽기 (Mouser + GLM)
 ├── tests/
 │   ├── run-all-tests.js               ← TestRunner (구현됨, 동작 확인됨)
 │   ├── test-mouser-live.js            ← Mouser 실제 API 테스트
@@ -157,7 +167,7 @@ Passive_component_matching/
 ├── docs/
 │   ├── package-size-table.md          ← Metric↔Imperial 변환표
 │   └── session-context.md             ← 이 파일 (대화 이력)
-├── .env.example                       ← API 키 템플릿 (Mouser만, 실제 키 없음)
+├── .env.example                       ← API 키 템플릿 (Mouser + GLM, 실제 키 없음)
 ├── .gitignore                         ← .env, node_modules 등 차단
 └── package.json                       ← npm test / npm run test:live
 ```
@@ -179,8 +189,9 @@ Passive_component_matching/
 ```bash
 npm install                        # 최초 1회
 npm test                           # mock 테스트 (API 키 불필요)
-npm run test:live                  # 실제 Mouser API 호출 (.env에 키 필요)
+npm run test:live                  # 실제 Mouser + GLM API 호출 (.env에 키 필요)
 node tests/test-mouser-live.js     # Mouser만 단독 실행
+node tests/test-glm-live.js        # GLM만 단독 실행
 ```
 
 ---
@@ -201,3 +212,5 @@ node tests/test-mouser-live.js     # Mouser만 단독 실행
 | 2026-03-05 | **Digikey 제거 → Mouser API 단일 사용으로 전환** |
 | 2026-03-05 | **PackageListBuilder 에이전트 추가** (Mouser API로 패키지 리스트 동적 추출) |
 | 2026-03-05 | 서브에이전트 9개 → 10개 재편성 (DigikeyClient 삭제, PackageListBuilder/PackageListCache 추가) |
+| 2026-03-05 | **ZhipuAI GLM API 통합** — NlpParser(자연어 파싱) + GlmClient(API 클라이언트) 에이전트 추가 |
+| 2026-03-05 | 서브에이전트 10개 → 12개 재편성, 2단계 파싱 전략 (정규식 → GLM 폴백) |

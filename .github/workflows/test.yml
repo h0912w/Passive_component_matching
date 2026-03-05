@@ -27,6 +27,7 @@ jobs:
     if: github.event_name == 'push'  # PR에서는 Secrets 접근 불가하므로 push만
     env:
       MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
+      GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

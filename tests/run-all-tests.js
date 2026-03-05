@@ -7,6 +7,7 @@
  *
  * --live 플래그를 쓰려면 .env 파일에 API 키가 있어야 합니다.
  *   MOUSER_API_KEY=실제키
+ *   GLM_API_KEY=실제키
  */
 
 'use strict';
@@ -38,6 +39,8 @@ const SUITES = [
   { name: 'Config',           file: 'test-config.js',            targetFile: 'apps-script/Config.gs',           live: false },
   { name: 'CacheManager',     file: 'test-cache-manager.js',     targetFile: 'apps-script/CacheManager.gs',     live: false },
   { name: 'MouserClient',       file: 'test-mouser-client.js',       targetFile: 'apps-script/MouserClient.gs',       live: false },
+  { name: 'GlmClient',          file: 'test-glm-client.js',          targetFile: 'apps-script/GlmClient.gs',          live: false },
+  { name: 'NlpParser',          file: 'test-nlp-parser.js',          targetFile: 'apps-script/NlpParser.gs',          live: false },
   { name: 'PackageListBuilder', file: 'test-package-list-builder.js', targetFile: 'apps-script/PackageListBuilder.gs', live: false },
 
   // ── 통합 테스트 (mock API, 항상 실행) ──
@@ -45,6 +48,7 @@ const SUITES = [
 
   // ── 실제 API 호출 (--live 플래그 + API 키 필요) ──
   { name: 'Mouser-Live',      file: 'test-mouser-live.js',       targetFile: 'apps-script/MouserClient.gs',     live: true  },
+  { name: 'GLM-Live',         file: 'test-glm-live.js',          targetFile: 'apps-script/GlmClient.gs',        live: true  },
 ];
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -123,8 +127,9 @@ function writeFeedback(result, retryCount) {
 function main() {
   console.log('\n🧪 Passive Component Matching — TestRunner');
   if (LIVE_MODE) {
-    const hasMouser  = !!process.env.MOUSER_API_KEY;
-    console.log(`   모드: LIVE  (Mouser:${hasMouser ? '✅' : '❌'})`);
+    const hasMouser = !!process.env.MOUSER_API_KEY;
+    const hasGlm    = !!process.env.GLM_API_KEY;
+    console.log(`   모드: LIVE  (Mouser:${hasMouser ? '✅' : '❌'}  GLM:${hasGlm ? '✅' : '❌'})`);
   } else {
     console.log('   모드: MOCK  (실제 API 호출 없음)');
     console.log('   실제 API 테스트: node tests/run-all-tests.js --live');

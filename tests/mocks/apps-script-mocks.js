@@ -15,7 +15,8 @@ const mockPropertiesService = {
   getScriptProperties: () => ({
     getProperty: (key) => {
       const props = {
-        MOUSER_API_KEY: 'test-mouser-key-000000000000000000000000'
+        MOUSER_API_KEY: 'test-mouser-key-000000000000000000000000',
+        GLM_API_KEY:    'test-glm-key-000000000000000000000000'
       };
       return props[key] || null;
     },
@@ -78,9 +79,27 @@ const mouserSuccessResponse = {
   }
 };
 
+// ─── 기본 GLM 성공 응답 mock ─────────────────────────────────────────────────
+const glmSuccessResponse = {
+  choices: [
+    {
+      message: {
+        content: JSON.stringify({
+          resistance_ohms: 1000,
+          package: '0402',
+          tolerance_percent: 5
+        })
+      },
+      finish_reason: 'stop'
+    }
+  ],
+  usage: { total_tokens: 150 }
+};
+
 module.exports = {
   mockPropertiesService,
   mockCacheService,
   makeMockFetch,
-  mouserSuccessResponse
+  mouserSuccessResponse,
+  glmSuccessResponse
 };
