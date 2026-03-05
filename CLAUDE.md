@@ -57,6 +57,69 @@ POST https://api.mouser.com/api/v2/search/keyword?apiKey=YOUR_API_KEY
 
 ---
 
+## API 키 보안 관리
+
+> **절대 규칙**: API 키를 소스코드나 Git에 절대 커밋하지 않는다.
+
+### 방법 1: Apps Script PropertiesService (권장 — 가장 간단)
+
+Apps Script 에디터에서 직접 설정하는 방식. 코드에 키가 노출되지 않음.
+
+**설정 방법**:
+1. Apps Script 에디터 (script.google.com) 열기
+2. 좌측 **프로젝트 설정** (톱니바퀴) 클릭
+3. "스크립트 속성" 섹션에서 **속성 추가**:
+   - 속성: `MOUSER_API_KEY` / 값: `발급받은 키`
+   - 속성: `DIGIKEY_CLIENT_ID` / 값: `발급받은 ID`
+   - 속성: `DIGIKEY_CLIENT_SECRET` / 값: `발급받은 시크릿`
+4. 저장
+
+**코드에서 읽기** (`Config.gs`):
+```javascript
+function getMouserApiKey() {
+  return PropertiesService.getScriptProperties().getProperty('MOUSER_API_KEY');
+}
+
+function getDigikeyCredentials() {
+  var props = PropertiesService.getScriptProperties();
+  return {
+    clientId: props.getProperty('DIGIKEY_CLIENT_ID'),
+    clientSecret: props.getProperty('DIGIKEY_CLIENT_SECRET')
+  };
+}
+```
+
+### 방법 2: Google Cloud Secret Manager (대규모 프로젝트용)
+
+접근 감사 로그, 버전 관리, IAM 기반 접근 제어가 필요한 경우.
+
+**설정 방법**:
+1. GCP 콘솔 → Secret Manager API 활성화
+2. 시크릿 생성: `gcloud secrets create mouser-api-key --data-file=-`
+3. `appsscript.json`에 `https://www.googleapis.com/auth/cloud-platform` 스코프 추가
+4. 코드에서 Secret Manager API로 조회
+
+### 방법 3: 로컬 테스트용 .env 파일
+
+로컬 Node.js 테스트에서만 사용. **절대 Git에 커밋하지 않음**.
+
+```bash
+# .env (프로젝트 루트에 생성, .gitignore에 등록됨)
+MOUSER_API_KEY=your_actual_key_here
+DIGIKEY_CLIENT_ID=your_client_id
+DIGIKEY_CLIENT_SECRET=your_client_secret
+```
+
+### 현재 프로젝트 적용
+
+| 환경 | 방법 | 설명 |
+|------|------|------|
+| **Apps Script (배포)** | PropertiesService | 에디터 > 프로젝트 설정 > 스크립트 속성 |
+| **로컬 테스트 (Node.js)** | `.env` 파일 | `.gitignore`에 등록, mock으로도 대체 가능 |
+| **GitHub** | 키 없음 | `Config.gs`에는 키 읽기 함수만 존재, 실제 값 없음 |
+
+---
+
 ## 아키텍처
 
 ```
