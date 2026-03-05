@@ -57,66 +57,138 @@ POST https://api.mouser.com/api/v2/search/keyword?apiKey=YOUR_API_KEY
 
 ---
 
+## Apps Script 프로젝트 생성 및 배포 전체 절차
+
+> Apps Script를 처음 설정할 때 한 번만 수행하면 됩니다.
+
+### Step 1: Apps Script 프로젝트 생성
+
+1. https://script.google.com 접속 (Google 계정 로그인)
+2. 좌측 상단 **"새 프로젝트"** 클릭
+3. 프로젝트 이름 변경: 상단 "제목 없는 프로젝트" 클릭 → `Passive Component Matching Tool` 입력
+
+### Step 2: 소스 파일 추가
+
+Apps Script 에디터에서 아래 파일들을 순서대로 생성한다.
+파일 추가: 좌측 파일 목록 옆 **`+`** 버튼 → "스크립트"
+
+생성할 파일 목록 (`apps-script/` 디렉토리의 `.gs` 파일들):
+```
+Config.gs
+PackageConverter.gs
+ValueParser.gs
+DigikeyClient.gs
+MouserClient.gs
+StockRanker.gs
+OutputFormatter.gs
+ErrorHandler.gs
+CacheManager.gs
+Code.gs
+```
+
+각 파일 생성 후 GitHub의 `apps-script/` 폴더에 있는 동일 파일 내용을 붙여넣기.
+
+> **팁**: `clasp` CLI를 사용하면 push 명령으로 자동 업로드 가능 (아래 Step 6 참고)
+
+### Step 3: API 키 등록 (스크립트 속성)
+
+> **보안 핵심**: 키는 코드가 아닌 스크립트 속성에만 저장. Git에 절대 올라가지 않음.
+
+1. Apps Script 에디터 좌측 **⚙️ 프로젝트 설정** 클릭
+2. 스크롤 내려 **"스크립트 속성"** 섹션 찾기
+3. **"속성 추가"** 버튼 클릭 후 아래 항목 등록:
+
+| 속성 이름 | 값 | 비고 |
+|-----------|-----|------|
+| `MOUSER_API_KEY` | `발급받은 Mouser API 키` | 현재 보유 중 |
+| `DIGIKEY_CLIENT_ID` | `발급받은 Client ID` | Digikey 발급 후 입력 |
+| `DIGIKEY_CLIENT_SECRET` | `발급받은 Client Secret` | Digikey 발급 후 입력 |
+
+4. **"스크립트 속성 저장"** 클릭
+
+코드에서는 `Config.gs`가 자동으로 읽어옴:
+```javascript
+// 직접 키를 쓰지 않음 — PropertiesService로 안전하게 조회
+PropertiesService.getScriptProperties().getProperty('MOUSER_API_KEY')
+```
+
+### Step 4: 웹 앱으로 배포
+
+1. 에디터 우측 상단 **"배포"** → **"새 배포"** 클릭
+2. 유형 선택: **"웹 앱"**
+3. 설정:
+   - 설명: `v1`
+   - 다음 사용자로 실행: **나** (본인 Google 계정)
+   - 액세스 권한: **모든 사용자** (Blogger에서 누구나 호출 가능하게)
+4. **"배포"** 클릭
+5. Google 계정 권한 승인 화면 → 승인
+6. **웹 앱 URL** 복사 → `blogger/resistor-tool.html`의 `APPS_SCRIPT_URL` 변수에 붙여넣기
+
+웹 앱 URL 형식:
+```
+https://script.google.com/macros/s/{DEPLOYMENT_ID}/exec
+```
+
+### Step 5: 배포 업데이트 (코드 수정 시)
+
+소스코드를 수정할 때마다:
+1. **"배포"** → **"배포 관리"** 클릭
+2. 기존 배포 옆 ✏️ 편집 아이콘 클릭
+3. 버전: **"새 버전"** 선택
+4. **"배포"** 클릭
+
+### Step 6: clasp CLI로 자동 업로드 (선택사항)
+
+코드를 에디터에 일일이 붙여넣는 대신 CLI로 자동 업로드:
+
+```bash
+# clasp 설치
+npm install -g @google/clasp
+
+# Google 계정 로그인
+clasp login
+
+# 기존 Apps Script 프로젝트에 연결 (Script ID는 에디터 URL에서 확인)
+cd apps-script/
+clasp clone {SCRIPT_ID}
+
+# 코드 업로드
+clasp push
+
+# 배포
+clasp deploy --description "v2"
+```
+
+Script ID 확인: Apps Script 에디터 URL
+```
+https://script.google.com/home/projects/{SCRIPT_ID}/edit
+```
+
+---
+
 ## API 키 보안 관리
 
 > **절대 규칙**: API 키를 소스코드나 Git에 절대 커밋하지 않는다.
 
-### 방법 1: Apps Script PropertiesService (권장 — 가장 간단)
+### 키 저장 위치 요약
 
-Apps Script 에디터에서 직접 설정하는 방식. 코드에 키가 노출되지 않음.
+| 환경 | 저장 방법 | Git 포함 여부 |
+|------|----------|--------------|
+| **Apps Script (배포)** | 에디터 > 프로젝트 설정 > 스크립트 속성 | ❌ 포함 안 됨 |
+| **로컬 Node.js 테스트** | `.env` 파일 | ❌ `.gitignore`로 차단 |
+| **GitHub 소스코드** | 키 없음 — 읽기 함수만 존재 | ✅ 안전 |
 
-**설정 방법**:
-1. Apps Script 에디터 (script.google.com) 열기
-2. 좌측 **프로젝트 설정** (톱니바퀴) 클릭
-3. "스크립트 속성" 섹션에서 **속성 추가**:
-   - 속성: `MOUSER_API_KEY` / 값: `발급받은 키`
-   - 속성: `DIGIKEY_CLIENT_ID` / 값: `발급받은 ID`
-   - 속성: `DIGIKEY_CLIENT_SECRET` / 값: `발급받은 시크릿`
-4. 저장
-
-**코드에서 읽기** (`Config.gs`):
-```javascript
-function getMouserApiKey() {
-  return PropertiesService.getScriptProperties().getProperty('MOUSER_API_KEY');
-}
-
-function getDigikeyCredentials() {
-  var props = PropertiesService.getScriptProperties();
-  return {
-    clientId: props.getProperty('DIGIKEY_CLIENT_ID'),
-    clientSecret: props.getProperty('DIGIKEY_CLIENT_SECRET')
-  };
-}
-```
-
-### 방법 2: Google Cloud Secret Manager (대규모 프로젝트용)
-
-접근 감사 로그, 버전 관리, IAM 기반 접근 제어가 필요한 경우.
-
-**설정 방법**:
-1. GCP 콘솔 → Secret Manager API 활성화
-2. 시크릿 생성: `gcloud secrets create mouser-api-key --data-file=-`
-3. `appsscript.json`에 `https://www.googleapis.com/auth/cloud-platform` 스코프 추가
-4. 코드에서 Secret Manager API로 조회
-
-### 방법 3: 로컬 테스트용 .env 파일
-
-로컬 Node.js 테스트에서만 사용. **절대 Git에 커밋하지 않음**.
+### 로컬 테스트용 .env 설정
 
 ```bash
-# .env (프로젝트 루트에 생성, .gitignore에 등록됨)
-MOUSER_API_KEY=your_actual_key_here
-DIGIKEY_CLIENT_ID=your_client_id
-DIGIKEY_CLIENT_SECRET=your_client_secret
+# .env.example을 복사해서 .env 생성 (Git에 커밋하지 말 것)
+cp .env.example .env
+
+# .env 파일에 실제 키 입력
+MOUSER_API_KEY=실제키입력
+DIGIKEY_CLIENT_ID=실제ID입력
+DIGIKEY_CLIENT_SECRET=실제시크릿입력
 ```
-
-### 현재 프로젝트 적용
-
-| 환경 | 방법 | 설명 |
-|------|------|------|
-| **Apps Script (배포)** | PropertiesService | 에디터 > 프로젝트 설정 > 스크립트 속성 |
-| **로컬 테스트 (Node.js)** | `.env` 파일 | `.gitignore`에 등록, mock으로도 대체 가능 |
-| **GitHub** | 키 없음 | `Config.gs`에는 키 읽기 함수만 존재, 실제 값 없음 |
 
 ---
 
