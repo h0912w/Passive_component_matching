@@ -37,15 +37,14 @@ const SUITES = [
   // ── DI + mock (항상 실행, Apps Script API를 mock으로 대체) ──
   { name: 'Config',           file: 'test-config.js',            targetFile: 'apps-script/Config.gs',           live: false },
   { name: 'CacheManager',     file: 'test-cache-manager.js',     targetFile: 'apps-script/CacheManager.gs',     live: false },
-  { name: 'MouserClient',     file: 'test-mouser-client.js',     targetFile: 'apps-script/MouserClient.gs',     live: false },
-  { name: 'DigikeyClient',    file: 'test-digikey-client.js',    targetFile: 'apps-script/DigikeyClient.gs',    live: false },
+  { name: 'MouserClient',       file: 'test-mouser-client.js',       targetFile: 'apps-script/MouserClient.gs',       live: false },
+  { name: 'PackageListBuilder', file: 'test-package-list-builder.js', targetFile: 'apps-script/PackageListBuilder.gs', live: false },
 
   // ── 통합 테스트 (mock API, 항상 실행) ──
   { name: 'Integration',      file: 'test-integration.js',       targetFile: 'apps-script/',                    live: false },
 
   // ── 실제 API 호출 (--live 플래그 + API 키 필요) ──
   { name: 'Mouser-Live',      file: 'test-mouser-live.js',       targetFile: 'apps-script/MouserClient.gs',     live: true  },
-  { name: 'Digikey-Live',     file: 'test-digikey-live.js',      targetFile: 'apps-script/DigikeyClient.gs',    live: true  },
 ];
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -125,8 +124,7 @@ function main() {
   console.log('\n🧪 Passive Component Matching — TestRunner');
   if (LIVE_MODE) {
     const hasMouser  = !!process.env.MOUSER_API_KEY;
-    const hasDigikey = !!(process.env.DIGIKEY_CLIENT_ID && process.env.DIGIKEY_CLIENT_SECRET);
-    console.log(`   모드: LIVE  (Mouser:${hasMouser ? '✅' : '❌'}  Digikey:${hasDigikey ? '✅' : '❌'})`);
+    console.log(`   모드: LIVE  (Mouser:${hasMouser ? '✅' : '❌'})`);
   } else {
     console.log('   모드: MOCK  (실제 API 호출 없음)');
     console.log('   실제 API 테스트: node tests/run-all-tests.js --live');

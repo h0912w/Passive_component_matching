@@ -27,8 +27,6 @@ jobs:
     if: github.event_name == 'push'  # PR에서는 Secrets 접근 불가하므로 push만
     env:
       MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
-      DIGIKEY_CLIENT_ID: ${{ secrets.DIGIKEY_CLIENT_ID }}
-      DIGIKEY_CLIENT_SECRET: ${{ secrets.DIGIKEY_CLIENT_SECRET }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

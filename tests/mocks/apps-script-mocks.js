@@ -15,9 +15,7 @@ const mockPropertiesService = {
   getScriptProperties: () => ({
     getProperty: (key) => {
       const props = {
-        MOUSER_API_KEY:        'test-mouser-key-000000000000000000000000',
-        DIGIKEY_CLIENT_ID:     'test-digikey-client-id',
-        DIGIKEY_CLIENT_SECRET: 'test-digikey-client-secret'
+        MOUSER_API_KEY: 'test-mouser-key-000000000000000000000000'
       };
       return props[key] || null;
     },
@@ -64,7 +62,7 @@ function makeMockFetch(responseMap) {
 }
 
 // ─── 기본 Mouser 성공 응답 mock ───────────────────────────────────────────────
-const mousерSuccessResponse = {
+const mouserSuccessResponse = {
   SearchResults: {
     NumberOfResult: 1,
     Parts: [
@@ -80,38 +78,9 @@ const mousерSuccessResponse = {
   }
 };
 
-// ─── 기본 Digikey 성공 응답 mock ──────────────────────────────────────────────
-const digikeySuccessResponse = {
-  Products: [
-    {
-      DigiKeyPartNumber:       '311-1.00KLRCT-ND',
-      ManufacturerPartNumber:  'RC0402FR-071KL',
-      Manufacturer:            { Name: 'Yageo' },
-      ProductDescription:      'RES SMD 1K OHM 1% 1/16W 0402',
-      QuantityAvailable:        4500000,
-      UnitPrice:                0.01,
-      Parameters: [
-        { ParameterText: 'Resistance',     ValueText: '1 kOhms' },
-        { ParameterText: 'Tolerance',      ValueText: '±1%' },
-        { ParameterText: 'Package / Case', ValueText: '0402 (1005 Metric)' }
-      ]
-    }
-  ],
-  TotalProductCount: 1
-};
-
-// ─── Digikey OAuth 토큰 mock ──────────────────────────────────────────────────
-const digikeyTokenResponse = {
-  access_token: 'mock-digikey-access-token-abcdef',
-  token_type:   'Bearer',
-  expires_in:   1800
-};
-
 module.exports = {
   mockPropertiesService,
   mockCacheService,
   makeMockFetch,
-  mousерSuccessResponse,
-  digikeySuccessResponse,
-  digikeyTokenResponse
+  mouserSuccessResponse
 };
