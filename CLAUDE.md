@@ -1,5 +1,11 @@
 # Passive Component Matching Tool
 
+> **⚠️ 세션 시작 시 반드시 실행 (브랜치 혼동 방지)**:
+> git fetch --all --prune && git branch -a
+> 시스템이 자동 할당한 세션 브랜치와 실제 작업 브랜치가 다를 수 있음.
+> 반드시 기존 작업 브랜치(claude/resistor-lookup-tool-2ewOv)를 확인하고 그 위에서 작업할 것.
+
+
 > **새 채팅에서 이 프로젝트를 이어받는 경우**:
 > `docs/session-context.md` 를 먼저 읽으세요. 지금까지의 결정 사항, 현재 진행 상태, 다음 할 일이 정리되어 있습니다.
 
