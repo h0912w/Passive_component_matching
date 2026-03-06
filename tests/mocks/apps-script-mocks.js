@@ -1,3 +1,6 @@
+// .gs 확장자를 Node.js에서 인식하도록 등록
+require.extensions['.gs'] = require.extensions['.js'];
+
 /**
  * apps-script-mocks.js
  * Apps Script 전용 전역 객체(PropertiesService, CacheService, UrlFetchApp)를
@@ -27,15 +30,14 @@ const mockPropertiesService = {
 
 // ─── CacheService mock ────────────────────────────────────────────────────────
 // 기본 동작: 항상 캐시 미스 → 실제 로직(fetch)이 실행되도록 함
+const _cacheStore = {};
+const _scriptCache = {
+  get:    (key) => _cacheStore[key] || null,
+  put:    (key, val, ttl) => { _cacheStore[key] = val; },
+  remove: (key) => { delete _cacheStore[key]; }
+};
 const mockCacheService = {
-  getScriptCache: () => {
-    const store = {};
-    return {
-      get:    (key) => store[key] || null,
-      put:    (key, val, ttl) => { store[key] = val; },
-      remove: (key) => { delete store[key]; }
-    };
-  }
+  getScriptCache: () => _scriptCache
 };
 
 // ─── UrlFetchApp mock 팩토리 ──────────────────────────────────────────────────
