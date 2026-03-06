@@ -36,6 +36,13 @@ jobs:
       - run: npm install
       - name: Run live tests
         run: npm run test:live
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-reports
+          path: tests/reports/
+          if-no-files-found: ignore
       - name: Upload failure feedback
         if: failure()
         uses: actions/upload-artifact@v4
