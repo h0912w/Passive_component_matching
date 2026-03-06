@@ -286,7 +286,8 @@ Passive_component_matching/
 │       └── last-failure.json          # 마지막 실패 정보 (피드백 루프용)
 ├── docs/
 │   ├── package-size-table.md          # 패키지 크기 변환표
-│   └── session-context.md             # 세션 이력 & 현재 상태 (새 채팅창 필독)
+│   ├── session-context.md             # 세션 이력 & 현재 상태 (새 채팅창 필독)
+│   └── test-report.md                 # 테스트 결과 종합 리포트 (Tier 1/2)
 ├── .env.example                       # API 키 템플릿 (실제 값 없음, Git 포함)
 ├── .gitignore                         # .env, node_modules 차단
 └── package.json                       # npm test / npm run test:live
