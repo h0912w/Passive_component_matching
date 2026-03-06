@@ -276,9 +276,12 @@ Passive_component_matching/
 │   ├── test-integration.js            # 전체 파이프라인 통합 테스트 (mock API)
 │   ├── test-mouser-live.js            # Mouser 실제 API 호출 테스트 (--live 전용)
 │   ├── test-glm-live.js               # GLM 실제 API 호출 테스트 (--live 전용)
+│   ├── test-random-validation.js      # GLM 랜덤 저항값 E2E 검증 + 리포트 생성 (--live 전용)
 │   ├── mocks/
 │   │   ├── apps-script-mocks.js       # PropertiesService, CacheService, UrlFetchApp mock
 │   │   └── api-responses.json         # Mouser mock 응답 데이터
+│   ├── reports/                       # 랜덤 검증 리포트 (타임스탬프별 자동 생성)
+│   │   └── validation-YYYY-MM-DDTHH-MM-SS.md
 │   └── feedback/
 │       └── last-failure.json          # 마지막 실패 정보 (피드백 루프용)
 ├── docs/
@@ -637,8 +640,14 @@ node tests/test-integration.js
 node tests/test-mouser-live.js
 node tests/test-glm-live.js
 
+# 랜덤 검증 (GLM으로 랜덤 입력 생성 → Mouser 실제 검색 → 리포트 저장)
+node tests/test-random-validation.js
+
 # 실패 시 피드백 파일 확인
 cat tests/feedback/last-failure.json
+
+# 검증 리포트 확인
+ls tests/reports/
 ```
 
 기대 출력:

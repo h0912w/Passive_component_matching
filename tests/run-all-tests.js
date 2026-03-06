@@ -49,6 +49,9 @@ const SUITES = [
   // ── 실제 API 호출 (--live 플래그 + API 키 필요) ──
   { name: 'Mouser-Live',      file: 'test-mouser-live.js',       targetFile: 'apps-script/MouserClient.gs',     live: true  },
   { name: 'GLM-Live',         file: 'test-glm-live.js',          targetFile: 'apps-script/GlmClient.gs',        live: true  },
+
+  // ── 랜덤 검증 (GLM + Mouser 실제 API, 리포트 생성) ──
+  { name: 'Random-Validation', file: 'test-random-validation.js', targetFile: 'apps-script/',                   live: true  },
 ];
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────────────
@@ -74,7 +77,7 @@ function runSuite(suite) {
   try {
     const output = execSync(`node "${filePath}"`, {
       encoding: 'utf8',
-      timeout:  30000,
+      timeout:  suite.live ? 120000 : 30000,
       cwd:      path.join(__dirname, '..')
     });
     const lines  = output.trim().split('\n');

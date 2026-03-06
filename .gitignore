@@ -7,6 +7,9 @@
 .clasprc.json
 .clasp.json
 
+# Test feedback (auto-generated)
+tests/feedback/
+
 # Node.js
 node_modules/
 
