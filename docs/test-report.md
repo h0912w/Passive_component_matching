@@ -1,13 +1,18 @@
 # 테스트 결과 리포트
 
 > 생성일: 2026-03-06
-> 환경: Node.js 20, Ubuntu (로컬 + GitHub Actions CI)
+> 환경: Node.js 20, Ubuntu (로컬 샌드박스 + GitHub Actions CI)
 
 ---
 
 ## Tier 1: Mock 테스트 (API 키 불필요)
 
-로컬에서 `npm test` 실행 결과. 모든 외부 API는 mock으로 대체.
+`npm test` 실행 결과. 모든 외부 API는 mock으로 대체.
+
+```
+🧪 Passive Component Matching — TestRunner
+   모드: MOCK  (실제 API 호출 없음)
+```
 
 | 모듈 | 통과 | 상태 | 비고 |
 |------|------|------|------|
@@ -25,59 +30,99 @@
 | Integration | 9/9 | ✅ | mock API end-to-end |
 | **합계** | **110/110** | **✅** | **All systems go** |
 
+**결론**: 모든 비즈니스 로직, DI 패턴, mock 기반 API 클라이언트가 정상 동작.
+
 ---
 
 ## Tier 2: Live API 테스트 (API 키 필요)
 
-GitHub Actions에서 `npm run test:live` 실행. Repository Secrets에 등록된 실제 키 사용.
+`npm run test:live` 실행 결과.
 
-### 실행 방법
-- **자동**: `git push` → GitHub Actions 워크플로우 자동 트리거
-- **수동**: `.env` 파일에 키 입력 후 `npm run test:live`
+```
+🧪 Passive Component Matching — TestRunner
+   모드: LIVE  (Mouser:✅  GLM:✅)
+```
 
-### Live 테스트 항목
+### API 키 로딩 결과
 
-| 테스트 파일 | 검증 내용 | API |
-|------------|----------|-----|
-| `test-mouser-live.js` | Mouser API 연결, 키워드 검색 응답 구조, 재고 데이터 반환 | Mouser Search API v2 |
-| `test-glm-live.js` | GLM API 연결, 자연어→JSON 변환 정확도 | ZhipuAI GLM-4-flash |
-| `test-random-validation.js` | GLM 랜덤 입력 생성 → Mouser 실제 검색 → E2E 파이프라인 | Mouser + GLM |
+| API | 키 로딩 | 상태 |
+|-----|---------|------|
+| Mouser API Key | `.env`에서 정상 로딩 | ✅ `Mouser:✅` 표시 |
+| GLM API Key | `.env`에서 정상 로딩 | ✅ `GLM:✅` 표시 |
+
+> 키가 누락되면 `Mouser:❌` / `GLM:❌`로 표시되고 live 테스트가 SKIP됩니다.
+> 두 키 모두 ✅로 인식되어 **키 설정은 정상**임을 확인했습니다.
+
+### Live 테스트 실행 결과
+
+| 테스트 파일 | 통과 | 상태 | 실패 원인 |
+|------------|------|------|----------|
+| `test-mouser-live.js` | 0/2 | ❌ | `getaddrinfo EAI_AGAIN api.mouser.com` |
+| `test-glm-live.js` | 0/2 | ❌ | 네트워크 차단 (동일) |
+| `test-random-validation.js` | 0/1 | ❌ | 네트워크 차단 (동일) |
+
+### 실패 원인 분석
+
+```
+Error: getaddrinfo EAI_AGAIN api.mouser.com
+```
+
+- **원인**: 이 테스트를 실행한 환경(Claude Code 샌드박스)에서 **외부 네트워크 접속이 차단**됨
+- **DNS 해석 실패** (`EAI_AGAIN`) → `api.mouser.com`, `open.bigmodel.cn` 모두 접근 불가
+- **API 키 자체의 문제가 아님** — 키는 정상 로딩되었으나 HTTP 요청이 네트워크 레벨에서 차단됨
 
 ### API 키 동작 확인 체크리스트
 
-| 항목 | 확인 방법 | 상태 |
-|------|----------|------|
-| Mouser API Key 유효성 | `test-mouser-live.js` — 200 응답 + 검색 결과 반환 | ⏳ CI 실행 대기 |
-| Mouser Rate Limit | 30 req/min 이내 정상 동작 | ⏳ CI 실행 대기 |
-| GLM API Key 유효성 | `test-glm-live.js` — 200 응답 + JSON 파싱 성공 | ⏳ CI 실행 대기 |
-| GLM 자연어 파싱 정확도 | 한국어/영어 입력 → 구조화 JSON | ⏳ CI 실행 대기 |
-| E2E 파이프라인 | 랜덤 입력 → 파싱 → API 검색 → 결과 반환 | ⏳ CI 실행 대기 |
+| 항목 | 확인 방법 | 상태 | 비고 |
+|------|----------|------|------|
+| Mouser API Key 로딩 | TestRunner 헤더 `Mouser:✅` | ✅ 확인 | 키 형식 정상 |
+| GLM API Key 로딩 | TestRunner 헤더 `GLM:✅` | ✅ 확인 | 키 형식 정상 |
+| Mouser API 실제 호출 | `test-mouser-live.js` | ⏳ | 샌드박스 네트워크 제한 → **GitHub Actions CI에서 검증 필요** |
+| GLM API 실제 호출 | `test-glm-live.js` | ⏳ | 샌드박스 네트워크 제한 → **GitHub Actions CI에서 검증 필요** |
+| E2E 파이프라인 | `test-random-validation.js` | ⏳ | 샌드박스 네트워크 제한 → **GitHub Actions CI에서 검증 필요** |
 
-> **참고**: CI 실행 후 GitHub Actions 탭에서 `Tier 2 - Live API Tests` 결과를 확인하세요.
-> 상세 리포트는 Artifacts의 `validation-reports`에서 다운로드 가능합니다.
+### 결론
+
+- **Tier 1 (mock)**: 110/110 전체 통과 ✅ — 모든 비즈니스 로직 정상
+- **Tier 2 (live) 키 로딩**: Mouser ✅, GLM ✅ — 키 설정 정상
+- **Tier 2 (live) API 호출**: 샌드박스 네트워크 제한으로 외부 API 호출 불가
+- **실제 API 유효성 검증**: GitHub Actions CI에서 Repository Secrets로 자동 검증됨 (push 시 트리거)
 
 ---
 
-## CI 워크플로우 구조
+## GitHub Actions CI에서 Tier 2 실행하기
 
+이 샌드박스에서 외부 API 호출이 불가하므로, 실제 API 키 유효성은 GitHub Actions에서 검증합니다.
+
+### 자동 트리거
+```
+git push → Tier 1 통과 → Tier 2 자동 실행 (Secrets 키 사용)
+```
+
+### CI 워크플로우 구조
 ```
 git push
   └─→ Tier 1: Mock Tests (항상 실행)
         ├── 통과 → Tier 2: Live API Tests (Secrets 키 사용)
-        │            ├── test-mouser-live.js
-        │            ├── test-glm-live.js
-        │            └── test-random-validation.js
+        │            ├── test-mouser-live.js  ← 실제 Mouser API 호출
+        │            ├── test-glm-live.js     ← 실제 GLM API 호출
+        │            └── test-random-validation.js ← E2E 검증
         │            └── Artifacts 업로드 (reports/, feedback/)
         └── 실패 → Tier 2 스킵
 ```
 
+### CI 결과 확인 방법
+1. GitHub 리포지토리 → **Actions 탭** → 최신 워크플로우 클릭
+2. `Tier 2 - Live API Tests` Job 결과 확인
+3. Artifacts에서 `validation-reports` 다운로드 (상세 리포트)
+
 ---
 
-## 실패 시 확인 방법
+## 실패 시 디버깅
 
 1. **GitHub Actions 탭** → 실패한 Job 클릭 → 로그 확인
 2. **Artifacts 다운로드**: `test-failure-feedback` → `last-failure.json`
-3. **로컬 재현**: `.env`에 키 입력 후 `npm run test:live`
+3. **로컬 재현**: `.env`에 키 입력 후 `npm run test:live` (외부 네트워크 접근 가능한 환경에서)
 
 ---
 
@@ -85,7 +130,7 @@ git push
 
 | 파일 | 경로 | 설명 |
 |------|------|------|
-| 이 리포트 | `docs/test-report.md` | 테스트 결과 종합 리포트 |
+| 이 리포트 | `docs/test-report.md` | 테스트 결과 종합 리포트 (Tier 1/2) |
 | CI 워크플로우 | `.github/workflows/test.yml` | GitHub Actions 설정 |
 | 랜덤 검증 리포트 | `tests/reports/validation-*.md` | 타임스탬프별 자동 생성 |
 | 실패 피드백 | `tests/feedback/last-failure.json` | 마지막 실패 정보 |
