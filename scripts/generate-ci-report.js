@@ -11,36 +11,69 @@
 const fs = require('fs');
 const path = require('path');
 
-const date   = process.env.CI_DATE   || new Date().toUTCString();
-const branch = process.env.CI_BRANCH || 'unknown';
-const sha    = process.env.CI_SHA    || 'unknown';
-const repo   = process.env.CI_REPO   || 'unknown';
-const result = process.env.CI_RESULT || 'unknown';
+const date    = process.env.CI_DATE   || new Date().toUTCString();
+const branch  = process.env.CI_BRANCH || 'unknown';
+const sha     = process.env.CI_SHA    || 'unknown';
+const repo    = process.env.CI_REPO   || 'unknown';
+const result  = process.env.CI_RESULT || 'unknown';
 const outFile = process.env.CI_TEST_OUTPUT_FILE || '/tmp/test-output.txt';
 
 const badge = result === 'passed' ? '✅ PASSED' : '❌ FAILED';
-const testOutput = fs.existsSync(outFile)
-  ? fs.readFileSync(outFile, 'utf8').split('\n').slice(-30).join('\n')
+
+const rawOutput = fs.existsSync(outFile)
+  ? fs.readFileSync(outFile, 'utf8')
+  : '';
+
+// ── TIER1_SAMPLE 파싱 ───────────────────────────────────────────────────────
+// test-integration.js가 출력한 실제 테스트 입력/결과 데이터
+let sampleRows = [];
+const sampleLine = rawOutput.split('\n').find(l => l.startsWith('TIER1_SAMPLE:'));
+if (sampleLine) {
+  try {
+    sampleRows = JSON.parse(sampleLine.slice('TIER1_SAMPLE:'.length));
+  } catch (_) {}
+}
+
+// ── Tier 1 실제 테스트 결과 표 생성 ───────────────────────────────────────
+function buildTier1Table(rows) {
+  const header = [
+    '| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description |',
+    '|-----------|------------|------------|----------|-------------|-------------|',
+  ];
+  if (rows.length === 0) {
+    // 샘플 데이터 없으면 기본 예시 표시
+    return [
+      ...header,
+      '| `1k 1005 5%` | 1kΩ | 0402 (1005) | 5% | RC0402JR-071KL | RES SMD 1K OHM 5% 1/16W 0402 |',
+      '| *(테스트 출력 미캡처 — 다음 실행 시 실제 데이터 표시)* | | | | | |',
+    ].join('\n');
+  }
+  const dataRows = rows.map(r => {
+    if (r.success) {
+      return `| \`${r.input}\` | ${r.resistance} | ${r.package} | ${r.tolerance} | ${r.mpn} | ${r.description} |`;
+    } else {
+      return `| \`${r.input}\` | - | - | - | FAIL | 파싱 실패 |`;
+    }
+  });
+  return [...header, ...dataRows].join('\n');
+}
+
+// ── 전체 출력 마지막 40줄 (요약용) ────────────────────────────────────────
+const testOutput = rawOutput
+  ? rawOutput.split('\n').slice(-40).join('\n')
   : 'No output captured';
 
+// ── 리포트 조립 ────────────────────────────────────────────────────────────
 const report = [
   '# 테스트 결과 리포트',
   '',
-  '## 최종 출력물 (사용자가 실제로 받아보는 결과)',
+  '## Tier 1 실제 테스트 결과 (mock API)',
   '',
-  '> 이 표는 도구의 최종 출력 형태를 보여줍니다.',
-  '> 사용자가 저항 값 목록을 붙여넣으면 아래와 같은 6열 테이블이 출력됩니다.',
+  '> 아래 표는 이번 CI 실행에서 **실제로 입력된 랜덤 저항값**에 대한 파이프라인 출력입니다.',
+  '> MPN과 Description은 mock Mouser API 응답 (고정값). 저항값/패키지/오차 추출은 실제 파싱 결과.',
+  '> 실제 Mouser API 결과는 아래 Tier 2 섹션을 확인하세요.',
   '',
-  '| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description |',
-  '|-----------|------------|------------|----------|-------------|-------------|',
-  '| `1k 1005 5%` | 1kΩ | 0402 (1005) | 5% | RC0402JR-071KL | RES SMD 1K OHM 5% 1/16W 0402 |',
-  '| `10k/0603/1%` | 10kΩ | 0603 (1608) | 1% | RC0603FR-0710KL | RES SMD 10K OHM 1% 1/10W 0603 |',
-  '| `100R 0805 5%` | 100Ω | 0805 (2012) | 5% | CRCW0805100RJNEA | RES SMD 100 OHM 5% 1/8W 0805 |',
-  '| `4.7k_0402_1%` | 4.7kΩ | 0402 (1005) | 1% | RC0402FR-074K7L | RES SMD 4.7K OHM 1% 1/16W 0402 |',
-  '| `2.2M 1206 5%` | 2.2MΩ | 1206 (3216) | 5% | RC1206JR-072M2L | RES SMD 2.2M OHM 5% 1/4W 1206 |',
-  '| `칩저항 33옴 0603` | 33Ω | 0603 (1608) | — | RC0603JR-0733RL | RES SMD 33 OHM 5% 1/10W 0603 |',
-  '',
-  '> **부품명만 복사** 버튼을 누르면 MPN 목록만 클립보드에 복사됩니다.',
+  buildTier1Table(sampleRows),
   '',
   '---',
   '',
@@ -49,7 +82,7 @@ const report = [
   `- **Commit**: [${sha}](https://github.com/${repo}/commit/${sha})`,
   `- **Result**: ${badge}`,
   '',
-  '## Tier 1 Mock Test Output',
+  '## Tier 1 Mock Test 전체 출력 (마지막 40줄)',
   '',
   '```',
   testOutput,

@@ -25,17 +25,58 @@ jobs:
     runs-on: ubuntu-latest
     needs: test-mock  # mock 테스트 통과 후에만 실행
     if: github.event_name == 'push'  # PR에서는 Secrets 접근 불가하므로 push만
+    permissions:
+      contents: write  # main 브랜치에 Tier 2 결과 커밋 위한 쓰기 권한
     env:
       MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
       GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
       - run: npm install
-      - name: Run live tests
-        run: npm run test:live
+
+      # live 테스트 실행 + 결과 파일 저장
+      - name: Run live tests and capture output
+        id: live_output
+        run: |
+          set +e
+          npm run test:live > /tmp/live-output.txt 2>&1
+          EXIT_CODE=$?
+          set -e
+          if [ $EXIT_CODE -eq 0 ]; then
+            echo "LIVE_RESULT=passed" >> $GITHUB_OUTPUT
+          else
+            echo "LIVE_RESULT=failed" >> $GITHUB_OUTPUT
+          fi
+          # 랜덤 검증 리포트를 /tmp로 복사 (git checkout 전에 보존)
+          mkdir -p /tmp/live-reports
+          ls tests/reports/validation-*.md 2>/dev/null && \
+            cp tests/reports/validation-*.md /tmp/live-reports/ || true
+          cat /tmp/live-output.txt
+
+      # Tier 2 결과를 main의 test-report.md에 추가 커밋
+      # sync-to-main이 Tier 1 리포트를 이미 커밋한 후 이 단계가 실행됨
+      - name: Append Tier 2 results to test-report.md on main
+        if: always()
+        env:
+          CI_LIVE_OUTPUT_FILE: /tmp/live-output.txt
+          CI_LIVE_RESULT: ${{ steps.live_output.outputs.LIVE_RESULT }}
+          CI_LIVE_REPORTS_DIR: /tmp/live-reports
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          git checkout main
+          node scripts/append-tier2-report.js
+          git add docs/test-report.md
+          git diff --cached --quiet || git commit -m "docs: add tier2 results to test-report [skip ci]"
+          git push origin main || (git pull origin main --rebase && git push origin main)
+
       - name: Upload validation reports
         if: always()
         uses: actions/upload-artifact@v4

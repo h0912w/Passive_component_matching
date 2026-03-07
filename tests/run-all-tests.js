@@ -149,10 +149,11 @@ function main() {
       continue;
     }
 
-    // 랜덤 테스트 테이블 출력 (시드, ┌│└ 라인)
+    // 랜덤 테스트 테이블 출력 (시드, ┌│└ 라인, TIER1_SAMPLE)
     if (result.output) {
       const randomLines = result.output.split('\n').filter(l =>
-        /랜덤\s*(시드|E24|통합)/.test(l) || /[┌├┤└│]/.test(l)
+        /랜덤\s*(시드|E24|통합)/.test(l) || /[┌├┤└│]/.test(l) ||
+        l.startsWith('TIER1_SAMPLE:')
       );
       if (randomLines.length) {
         randomLines.forEach(l => console.log(l));

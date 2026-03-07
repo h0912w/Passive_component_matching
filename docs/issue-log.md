@@ -17,6 +17,7 @@
 | [#004](#004) | 2026-03-07 | GLM 연속 호출 Rate Limit — HTTP 500 | 🟡 Medium |
 | [#005](#005) | 2026-03-07 | Random-Validation 타임아웃 | 🟡 Medium |
 | [#006](#006) | 2026-03-07 | YAML heredoc `>` 특수문자 문법 오류 (test.yml L105) | 🔴 High |
+| [#007](#007) | 2026-03-07 | test-report.md 상단 표 하드코딩 + Tier 2 결과 미포함 | 🟡 Medium |
 
 ---
 
@@ -221,6 +222,35 @@ on:
 - `>`, `|`, 백틱 등 YAML 특수문자가 포함된 텍스트는 항상 **별도 파일(스크립트)로 분리**할 것
 - heredoc을 YAML `run:` 블록에서 사용할 경우, heredoc 내용의 들여쓰기가 `run:` 블록보다 낮아지면 YAML 파서가 오작동함을 인지할 것
 - 대안: Python `-c`, Node.js 인라인 스크립트도 동일 문제 발생 가능 → **파일 분리**가 가장 안전한 패턴
+
+---
+
+## #007
+
+### test-report.md 상단 표 하드코딩 + Tier 2 결과 미포함
+
+**날짜**: 2026-03-07
+
+**현상**
+- `docs/test-report.md` 최상단 표가 항상 동일한 하드코딩 예시 데이터로 채워짐
+- Tier 2 Live API 테스트 결과가 test-report.md에 전혀 포함되지 않음
+
+**원인**
+- `scripts/generate-ci-report.js`에 6열 표 예시가 정적 문자열로 하드코딩되어 있었음
+- `sync-to-main` 잡이 `test-mock` 완료 후에만 test-report.md를 생성/커밋
+- `test-live` 잡은 병렬 실행되지만 결과를 아티팩트로만 업로드 (test-report.md에 미포함)
+
+**조치사항**
+1. `tests/test-integration.js`: `TIER1_SAMPLE:JSON` 마커 출력 추가 (result4 실제 데이터)
+2. `tests/run-all-tests.js`: `TIER1_SAMPLE:` 라인 통과 필터 추가
+3. `scripts/generate-ci-report.js`: `TIER1_SAMPLE:` 파싱 → 실제 입력/파싱결과 표 생성
+4. `scripts/append-tier2-report.js` 신규 생성: Tier 2 결과를 test-report.md에 추가
+5. `.github/workflows/test.yml` `test-live` 잡: live 완료 후 main에 Tier 2 섹션 커밋
+
+**재발 방지 규칙**
+- 리포트에 "실제 테스트 결과"를 보여줄 때는 하드코딩 금지 — 테스트 출력 데이터를 파싱해 사용
+- 여러 잡이 같은 파일을 수정할 경우 타이밍 설계 명확히: Tier 1 잡 먼저 커밋, Tier 2 잡이 이어서 추가 (`git pull --rebase` 후 push)
+- main에 push하는 신규 잡은 반드시 `permissions: contents: write` 선언
 
 ---
 

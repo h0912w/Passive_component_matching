@@ -161,6 +161,18 @@ result4.rows.forEach((row, i) => {
   assert(`random_row${i+1}_has_resistance`, typeof row.resistance, 'string');
 });
 
+// CI 리포트용: 실제 테스트된 입력/출력 샘플 데이터 출력 (generate-ci-report.js가 파싱)
+const sampleData = result4.rows.map((row, i) => ({
+  input:       randomInputs[i],
+  resistance:  row.resistance,
+  package:     row.package,
+  tolerance:   row.tolerance,
+  mpn:         row.mpn,
+  description: row.description,
+  success:     row.success
+}));
+console.log('TIER1_SAMPLE:' + JSON.stringify(sampleData));
+
 console.log(`  Integration: ${passed}/${total}`);
 console.log(JSON.stringify({ passed, total, failedTest, targetFn }));
 process.exit(passed === total ? 0 : 1);
