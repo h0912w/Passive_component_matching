@@ -35,7 +35,11 @@ function httpsPost(hostname, path, body, headers) {
     }, (res) => {
       let data = '';
       res.on('data', chunk => { data += chunk; });
-      res.on('end', () => resolve({ code: res.statusCode, body: JSON.parse(data) }));
+      res.on('end', () => {
+        let body = {};
+        try { body = JSON.parse(data); } catch (e) { body = { _raw: data }; }
+        resolve({ code: res.statusCode, body });
+      });
     });
     req.on('error', reject);
     req.write(payload);
@@ -97,12 +101,12 @@ async function runTests() {
       '/api/paas/v4/chat/completions',
       {
         model: 'glm-4.7-flash',
-        messages: [{ role: 'user', content: 'Say "hello" in JSON: {"greeting":"hello"}' }],
+        messages: [{ role: 'user', content: 'What is 1 + 1? Answer with just the number.' }],
         temperature: 0.1
       },
       { 'Authorization': 'Bearer ' + API_KEY }
     );
-    if (resp.code !== 200) throw new Error(`HTTP ${resp.code}`);
+    if (resp.code !== 200) throw new Error(`HTTP ${resp.code}: ${JSON.stringify(resp.body).slice(0, 200)}`);
     if (!resp.body.choices || resp.body.choices.length === 0) throw new Error('choices 비어있음');
     if (!resp.body.usage) throw new Error('usage 필드 없음');
     console.log(`     ✅ 구조 정상: choices=${resp.body.choices.length}, tokens=${resp.body.usage.total_tokens}`);
