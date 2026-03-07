@@ -1,10 +1,9 @@
 # Passive Component Matching Tool
 
-> **⚠️ 세션 시작 시 반드시 실행 (브랜치 혼동 방지)**:
-> git fetch --all --prune && git branch -a
-> 시스템이 자동 할당한 세션 브랜치와 실제 작업 브랜치가 다를 수 있음.
-> 반드시 기존 작업 브랜치(claude/resistor-lookup-tool-2ewOv)를 확인하고 그 위에서 작업할 것.
-
+> **⚠️ 세션 시작 시**:
+> `main` 브랜치가 항상 최신 코드를 포함합니다 (GitHub Actions가 자동 동기화).
+> 시스템이 자동 할당한 세션 브랜치(`claude/...`)에서 작업하면 됩니다.
+> 작업 시작 전: `git fetch origin main && git merge origin/main` 으로 최신 코드를 가져오세요.
 
 > **새 채팅에서 이 프로젝트를 이어받는 경우**:
 > `docs/session-context.md` 를 먼저 읽으세요. 지금까지의 결정 사항, 현재 진행 상태, 다음 할 일이 정리되어 있습니다.
@@ -25,229 +24,16 @@
 >    ```
 > 3. **session-context.md 업데이트 없이 코드만 커밋하는 것은 금지.**
 
-> **⚠️ GitHub Actions sync-to-main이 동작하려면 (리포지토리 1회 설정 필수)**:
->
-> `GITHUB_TOKEN`은 기본적으로 **Read-only** 권한이다. 아래 설정을 하지 않으면
-> sync-to-main 잡이 `git push origin HEAD:main --force`에서 **403 Permission Denied**로 실패한다.
->
-> **설정 방법**:
-> 1. GitHub 리포지토리 → **Settings** → **Actions** → **General**
-> 2. 스크롤 맨 아래 **"Workflow permissions"** 섹션
-> 3. **"Read and write permissions"** 선택 (기본값이 "Read repository contents..." 이므로 변경 필요)
-> 4. **Save** 클릭
->
-> **왜 필요한가**: YAML에 `permissions: contents: write`를 선언해도,
-> 리포지토리 레벨 설정이 Read-only이면 GitHub가 쓰기를 차단한다.
-> 이 설정이 상위 권한이므로 반드시 먼저 변경해야 한다.
->
-> **확인 방법**: push 후 GitHub → Actions 탭 → "Sync to main" 잡이 녹색 체크(✅)인지 확인.
-> 실패(❌)면 위 설정을 다시 확인할 것.
->
-> **교훈 (2026-03-07)**: 이 설정 없이 "추가 작업 없다"고 잘못 안내한 적 있음.
-> CI/CD 설정은 반드시 **실제 동작 확인** 후에만 "완료"로 판단할 것.
-
 ## 프로젝트 개요
 회로 설계 시 저항 Value값(예: `1k 1005 5%`)을 입력하면 Mouser API를 통해 실제 구매 가능한 부품을 자동 매칭하는 도구.
 사용자가 수십 개의 저항 값을 한 번에 붙여넣으면, 실시간 재고가 있는 정확한 부품명과 설명을 테이블로 출력한다.
 
 ---
 
-## API 키 발급 방법
+## 초기 설정 (사용자가 직접 수행)
 
-### Mouser API 키 발급 (API Key 방식)
-
-1. **계정 생성**: https://www.mouser.com 에서 계정 생성/로그인
-2. **API Hub 접속**: https://www.mouser.com/api-hub/ 방문
-3. **Search API 신청**: "Search API" 항목에서 API 키 신청
-4. **키 발급**: 신청 완료 후 Part API Key가 발급됨 → 안전하게 보관
-
-**인증 방식**: URL 파라미터로 API Key 전달
-```
-POST https://api.mouser.com/api/v2/search/keyword?apiKey=YOUR_API_KEY
-```
-
-**주요 엔드포인트**:
-- `POST /api/v2/search/keyword` — 키워드 검색
-- `POST /api/v2/search/partnumber` — 부품번호 검색
-- `POST /api/v2/search/keywordandmanufacturer` — 키워드 + 제조사 검색
-
-**Rate Limit**: 30 요청/분, 1000 요청/일
-
-### ZhipuAI GLM API 키 발급
-
-1. **계정 생성**: https://open.bigmodel.cn 에서 계정 생성/로그인
-2. **API 키 발급**: 콘솔 > API Keys 에서 새 키 생성
-3. **키 발급**: 생성된 API Key를 안전하게 보관
-
-**인증 방식**: Bearer Token
-```
-POST https://open.bigmodel.cn/api/paas/v4/chat/completions
-Headers:
-  Authorization: Bearer YOUR_GLM_API_KEY
-  Content-Type: application/json
-```
-
-**사용 모델**: `glm-4.7-flash` (2026-01 출시, 빠른 응답, 비용 효율. 구 `glm-4-flash`는 deprecated)
-
-**용도**: 사용자 자연어 입력을 구조화된 저항값/패키지/오차로 변환 (NlpParser 에이전트)
-
----
-
-## Apps Script 프로젝트 생성 및 배포 전체 절차
-
-> Apps Script를 처음 설정할 때 한 번만 수행하면 됩니다.
-
-### Step 1: Apps Script 프로젝트 생성
-
-1. https://script.google.com 접속 (Google 계정 로그인)
-2. 좌측 상단 **"새 프로젝트"** 클릭
-3. 프로젝트 이름 변경: 상단 "제목 없는 프로젝트" 클릭 → `Passive Component Matching Tool` 입력
-
-### Step 2: 소스 파일 추가
-
-Apps Script 에디터에서 아래 파일들을 순서대로 생성한다.
-파일 추가: 좌측 파일 목록 옆 **`+`** 버튼 → "스크립트"
-
-생성할 파일 목록 (`apps-script/` 디렉토리의 `.gs` 파일들):
-```
-Config.gs
-PackageListBuilder.gs
-PackageConverter.gs
-ValueParser.gs
-NlpParser.gs
-MouserClient.gs
-GlmClient.gs
-StockRanker.gs
-OutputFormatter.gs
-ErrorHandler.gs
-CacheManager.gs
-Code.gs
-```
-
-각 파일 생성 후 GitHub의 `apps-script/` 폴더에 있는 동일 파일 내용을 붙여넣기.
-
-> **팁**: `clasp` CLI를 사용하면 push 명령으로 자동 업로드 가능 (아래 Step 6 참고)
-
-### Step 3: API 키 등록 (스크립트 속성)
-
-> **보안 핵심**: 키는 코드가 아닌 스크립트 속성에만 저장. Git에 절대 올라가지 않음.
-
-1. Apps Script 에디터 좌측 **⚙️ 프로젝트 설정** 클릭
-2. 스크롤 내려 **"스크립트 속성"** 섹션 찾기
-3. **"속성 추가"** 버튼 클릭 후 아래 항목 등록:
-
-| 속성 이름 | 값 | 비고 |
-|-----------|-----|------|
-| `MOUSER_API_KEY` | `발급받은 Mouser API 키` | 현재 보유 중 |
-| `GLM_API_KEY` | `발급받은 ZhipuAI GLM API 키` | NlpParser용 |
-
-4. **"스크립트 속성 저장"** 클릭
-
-코드에서는 `Config.gs`가 자동으로 읽어옴:
-```javascript
-// 직접 키를 쓰지 않음 — PropertiesService로 안전하게 조회
-PropertiesService.getScriptProperties().getProperty('MOUSER_API_KEY')
-```
-
-### Step 4: 웹 앱으로 배포
-
-1. 에디터 우측 상단 **"배포"** → **"새 배포"** 클릭
-2. 유형 선택: **"웹 앱"**
-3. 설정:
-   - 설명: `v1`
-   - 다음 사용자로 실행: **나** (본인 Google 계정)
-   - 액세스 권한: **모든 사용자** (Blogger에서 누구나 호출 가능하게)
-4. **"배포"** 클릭
-5. Google 계정 권한 승인 화면 → 승인
-6. **웹 앱 URL** 복사 → `blogger/resistor-tool.html`의 `APPS_SCRIPT_URL` 변수에 붙여넣기
-
-웹 앱 URL 형식:
-```
-https://script.google.com/macros/s/{DEPLOYMENT_ID}/exec
-```
-
-### Step 5: 배포 업데이트 (코드 수정 시)
-
-소스코드를 수정할 때마다:
-1. **"배포"** → **"배포 관리"** 클릭
-2. 기존 배포 옆 ✏️ 편집 아이콘 클릭
-3. 버전: **"새 버전"** 선택
-4. **"배포"** 클릭
-
-### Step 6: clasp CLI로 자동 업로드 (선택사항)
-
-코드를 에디터에 일일이 붙여넣는 대신 CLI로 자동 업로드:
-
-```bash
-# clasp 설치
-npm install -g @google/clasp
-
-# Google 계정 로그인
-clasp login
-
-# 기존 Apps Script 프로젝트에 연결 (Script ID는 에디터 URL에서 확인)
-cd apps-script/
-clasp clone {SCRIPT_ID}
-
-# 코드 업로드
-clasp push
-
-# 배포
-clasp deploy --description "v2"
-```
-
-Script ID 확인: Apps Script 에디터 URL
-```
-https://script.google.com/home/projects/{SCRIPT_ID}/edit
-```
-
----
-
-## API 키 보안 관리
-
-> **절대 규칙**: API 키를 소스코드나 Git에 절대 커밋하지 않는다.
-
-### 키 저장 위치 요약
-
-| 환경 | 저장 방법 | Git 포함 여부 |
-|------|----------|--------------|
-| **Apps Script (배포)** | 에디터 > 프로젝트 설정 > 스크립트 속성 | ❌ 포함 안 됨 |
-| **로컬 Node.js 테스트** | `.env` 파일 | ❌ `.gitignore`로 차단 |
-| **GitHub Actions (CI)** | Repository Secrets | ❌ 암호화 저장, 로그에 마스킹 |
-| **GitHub 소스코드** | 키 없음 — 읽기 함수만 존재 | ✅ 안전 |
-
-### 로컬 테스트용 .env 설정
-
-```bash
-# .env.example을 복사해서 .env 생성 (Git에 커밋하지 말 것)
-cp .env.example .env
-
-# .env 파일에 실제 키 입력
-MOUSER_API_KEY=실제키입력
-GLM_API_KEY=실제키입력
-```
-
-### GitHub Actions Secrets 설정 (CI 자동 테스트용)
-
-> push할 때마다 GitHub Actions가 mock + live 테스트를 자동 실행한다.
-
-1. GitHub 리포지토리 → **Settings** → **Secrets and variables** → **Actions**
-2. **"New repository secret"** 클릭 후 아래 항목 등록:
-
-| Secret 이름 | 값 |
-|-------------|-----|
-| `MOUSER_API_KEY` | 발급받은 Mouser API 키 |
-| `GLM_API_KEY` | 발급받은 ZhipuAI GLM API 키 |
-
-워크플로우 흐름:
-```
-git push → Tier 1 (mock 테스트) → 통과 → Tier 2 (live API 테스트, Secrets 키 사용)
-                                → 실패 → Tier 2 스킵
-```
-
-- Secrets는 암호화 저장되며 로그에 `***`로 마스킹됨
-- PR에서는 외부 기여자의 Secrets 접근을 방지하기 위해 live 테스트를 스킵
-- 실패 시 `tests/feedback/last-failure.json`이 Artifact로 업로드됨
+> API 키 발급, Apps Script 배포, GitHub Actions 설정 등 **사람이 직접 수행해야 하는**
+> 모든 초기 설정 절차는 **`docs/user-setup-guide.md`** 를 참고하세요.
 
 ---
 
@@ -330,7 +116,11 @@ Passive_component_matching/
 ├── docs/
 │   ├── package-size-table.md          # 패키지 크기 변환표
 │   ├── session-context.md             # 세션 이력 & 현재 상태 (새 채팅창 필독)
+│   ├── issue-log.md                   # 이슈 로그 (현상/원인/조치) — 코드 수정 전 필독
+│   ├── user-setup-guide.md            # 사용자 직접 수행 항목 (API 키 발급, 배포 등)
 │   └── test-report.md                 # 테스트 결과 종합 리포트 (Tier 1/2)
+├── scripts/
+│   └── generate-ci-report.js          # CI에서 test-report.md 생성 (YAML heredoc 우회)
 ├── .env.example                       # API 키 템플릿 (실제 값 없음, Git 포함)
 ├── .gitignore                         # .env, node_modules 차단
 └── package.json                       # npm test / npm run test:live
@@ -620,6 +410,13 @@ TestRunner → 전체 테스트 재실행으로 회귀 확인
 
 **최대 피드백 횟수**: 3회. 3회 이후에도 실패 시 → 사람에게 에스컬레이션.
 
+**⚠️ 랜덤 저항값 테스트 필수 규칙**:
+- 테스트는 **매 실행마다 다른 저항값**을 사용해야 한다. 항상 같은 값으로만 테스트하면 특정 엣지 케이스가 영구히 검출되지 않는다.
+- 단위 테스트(Tier 1): `Math.random()`으로 E24/E96 계열에서 무작위 값 선택
+- Live 테스트(Tier 2 / test-random-validation.js): GLM으로 랜덤 자연어 입력 생성 후 Mouser 실제 검색
+- 저항값 범위: 1Ω ~ 10MΩ, 패키지: 0201/0402/0603/0805/1206, 오차: 1%/5%
+- 랜덤 시드는 테스트 결과 리포트에 기록하여 재현 가능하게 할 것
+
 ---
 
 ## 구현 순서
@@ -735,6 +532,16 @@ Total: 50/50 passed ✅
    }
    ```
 4. **테스트 먼저 작성**: 코딩 에이전트가 파일 작성 → TestRunner가 즉시 테스트 실행
+
+### 테스트 입력값 랜덤화 규칙
+
+> **절대 규칙**: 테스트는 매 실행마다 **서로 다른 저항값**을 사용해야 한다.
+
+- 항상 같은 고정값(`1k 0402 5%` 등)만 테스트하면 특정 입력 패턴의 버그가 영구히 검출되지 않는다
+- **Tier 1 단위 테스트**: 고정 케이스 외에 `Math.random()` 기반 E24/E96 계열 랜덤값 추가 (최소 3개 이상)
+- **Tier 2 test-random-validation.js**: GLM으로 다양한 자연어 패턴 생성 → Mouser 실제 검색
+- 랜덤 범위: 1Ω ~ 10MΩ, 패키지: 0201/0402/0603/0805/1206, 오차: 0.1%/1%/5%
+- 테스트 리포트에 사용된 랜덤 시드 또는 입력값 목록을 기록하여 재현 가능하게 할 것
 
 ### 테스트 실패 시 피드백 루프
 1. TestRunner가 실패 감지 → `tests/feedback/last-failure.json` 생성
