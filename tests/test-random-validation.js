@@ -58,7 +58,7 @@ function httpsPost(hostname, urlPath, body, headers) {
       });
     });
     req.on('error', reject);
-    req.setTimeout(30000, () => { req.destroy(new Error('Request timeout')); });
+    req.setTimeout(45000, () => { req.destroy(new Error('Request timeout')); });
     req.write(payload);
     req.end();
   });
@@ -360,6 +360,10 @@ function esc(s) {
 async function runTests() {
   const startTime = new Date();
   const results = { passed: 0, total: 0, failedTest: null, targetFn: null, hint: null };
+
+  // GLM rate limit 대응: 이전 GLM 테스트 완료 후 10초 대기
+  console.log('  [0] GLM rate limit 대기 (10초)...');
+  await new Promise(resolve => setTimeout(resolve, 10000));
 
   // ── 1단계: GLM으로 랜덤 스펙 생성 ──
   console.log(`  [1] GLM으로 랜덤 저항 스펙 ${NUM_RANDOM}개 생성 중...`);
