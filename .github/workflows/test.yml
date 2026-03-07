@@ -51,11 +51,12 @@ jobs:
           path: tests/feedback/last-failure.json
           if-no-files-found: ignore
 
-  # main 자동 동기화 — Tier 1 통과 후 현재 브랜치 내용을 main에 force push
+  # main 자동 동기화 — Tier 1 통과 후 작업 브랜치를 main에 force push
+  # 작업 브랜치는 절대 건드리지 않음 — main에만 커밋
   sync-to-main:
     name: Sync to main
     runs-on: ubuntu-latest
-    needs: test-mock  # mock 테스트 통과 후에만 실행
+    needs: test-mock
     if: github.event_name == 'push' && github.ref != 'refs/heads/main'
     permissions:
       contents: write
@@ -64,8 +65,53 @@ jobs:
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm install
+
+      # 테스트 결과를 파일로 캡처
+      - name: Capture test output
+        id: test_output
+        run: |
+          npm test > /tmp/test-output.txt 2>&1 && echo "RESULT=passed" >> $GITHUB_OUTPUT || echo "RESULT=failed" >> $GITHUB_OUTPUT
+          cat /tmp/test-output.txt
+
+      # Step 1: 작업 브랜치 내용을 main에 force push
       - name: Force push to main
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git push origin HEAD:main --force
+
+      # Step 2: main 체크아웃 후 test-report.md만 추가 커밋 (작업 브랜치 불변)
+      - name: Commit test-report.md to main only
+        run: |
+          git fetch origin main
+          git checkout main
+
+          mkdir -p docs
+          RESULT="${{ steps.test_output.outputs.RESULT }}"
+          BADGE="✅ PASSED"
+          if [ "$RESULT" = "failed" ]; then BADGE="❌ FAILED"; fi
+
+          cat > docs/test-report.md << 'REPORT_EOF'
+          # Test Report
+          REPORT_EOF
+
+          cat >> docs/test-report.md << EOF
+          - **Date**: $(date -u '+%Y-%m-%d %H:%M UTC')
+          - **Branch**: ${{ github.ref_name }}
+          - **Commit**: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+          - **Result**: ${BADGE}
+
+          ## Tier 1 Mock Test Output
+          \`\`\`
+          $(tail -30 /tmp/test-output.txt)
+          \`\`\`
+          EOF
+
+          git add docs/test-report.md
+          git diff --cached --quiet || git commit -m "docs: update test-report [skip ci]"
+          git push origin main
