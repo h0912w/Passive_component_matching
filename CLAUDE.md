@@ -10,13 +10,15 @@
 > `docs/session-context.md` 를 먼저 읽으세요. 지금까지의 결정 사항, 현재 진행 상태, 다음 할 일이 정리되어 있습니다.
 
 > **⚠️ 푸시 전 필수 절차 (반드시 지킬 것)**:
-> 1. `docs/session-context.md`를 현재 세션 내용으로 업데이트한다 (결정사항, 진행상태, 다음 할 일).
-> 2. 작업 브랜치에 커밋한 뒤, **main에도 force push**하여 항상 최신 상태를 유지한다:
+> 1. **`docs/session-context.md`를 반드시 업데이트한다** — 오늘 나눈 대화 내용(결정사항, 변경사항, 다음 할 일)을 빠짐없이 기록.
+>    - 사소한 결정도 모두 포함. "왜 그렇게 했는지(Why)"를 꼭 명시할 것.
+>    - 세션 이력 테이블에 날짜 + 주요 작업 추가.
+> 2. **작업 브랜치에만 push**하면 된다. main 동기화는 GitHub Actions가 자동으로 처리한다:
 >    ```
 >    git push -u origin <작업브랜치>
->    git push origin HEAD:main --force
+>    # GitHub Actions: Tier 1 mock 테스트 통과 → main에 자동 force push
 >    ```
-> 3. 대화 이력 없이 코드만 푸시하는 것은 금지. session-context.md 업데이트가 선행되어야 한다.
+> 3. **session-context.md 업데이트 없이 코드만 커밋하는 것은 금지.**
 
 ## 프로젝트 개요
 회로 설계 시 저항 Value값(예: `1k 1005 5%`)을 입력하면 Mouser API를 통해 실제 구매 가능한 부품을 자동 매칭하는 도구.

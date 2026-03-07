@@ -50,3 +50,22 @@ jobs:
           name: test-failure-feedback
           path: tests/feedback/last-failure.json
           if-no-files-found: ignore
+
+  # main 자동 동기화 — Tier 1 통과 후 현재 브랜치 내용을 main에 force push
+  sync-to-main:
+    name: Sync to main
+    runs-on: ubuntu-latest
+    needs: test-mock  # mock 테스트 통과 후에만 실행
+    if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Force push to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin HEAD:main --force

@@ -214,3 +214,7 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-05 | 서브에이전트 9개 → 10개 재편성 (DigikeyClient 삭제, PackageListBuilder/PackageListCache 추가) |
 | 2026-03-05 | **ZhipuAI GLM API 통합** — NlpParser(자연어 파싱) + GlmClient(API 클라이언트) 에이전트 추가 |
 | 2026-03-05 | 서브에이전트 10개 → 12개 재편성, 2단계 파싱 전략 (정규식 → GLM 폴백) |
+| 2026-03-07 | **GitHub Actions sync-to-main 잡 추가** — Tier 1 mock 테스트 통과 시 작업 브랜치를 main에 자동 force push |
+| 2026-03-07 | CLAUDE.md 푸시 전 필수 절차 수정 — 수동 main force push 규칙을 "GitHub Actions가 자동 처리"로 정정 |
+| 2026-03-07 | **규칙 확립**: 커밋 시 반드시 session-context.md에 대화 내용(결정사항+Why) 함께 업데이트 |
+| 2026-03-07 | 브랜치 혼동 발생 (review-project-status-kJ0I4 ↔ resistor-lookup-tool-2ewOv) → resistor-lookup-tool-2ewOv 기준으로 reset |
