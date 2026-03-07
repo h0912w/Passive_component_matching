@@ -82,7 +82,7 @@ Headers:
   Content-Type: application/json
 ```
 
-**사용 모델**: `glm-4-flash` (빠른 응답, 비용 효율)
+**사용 모델**: `glm-4.7-flash` (2026-01 출시, 빠른 응답, 비용 효율. 구 `glm-4-flash`는 deprecated)
 
 **용도**: 사용자 자연어 입력을 구조화된 저항값/패키지/오차로 변환 (NlpParser 에이전트)
 

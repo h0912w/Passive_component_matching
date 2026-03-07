@@ -103,7 +103,7 @@ Headers:
 ### NlpParser용 요청
 ```json
 {
-  "model": "glm-4-flash",
+  "model": "glm-4.7-flash",
   "messages": [
     {
       "role": "system",
@@ -136,7 +136,7 @@ Headers:
 핵심:
 - `choices[0].message.content` → JSON 문자열 파싱하여 구조화 데이터 추출
 - `temperature: 0.1` → 결정적 응답 유도 (파싱 정확도 최대화)
-- `glm-4-flash` 모델 → 빠른 응답 속도, 비용 효율
+- `glm-4.7-flash` 모델 → 빠른 응답 속도, 비용 효율 (2026-01 출시, 구 glm-4-flash deprecated)
 
 ### NlpParser 동작 흐름
 ```

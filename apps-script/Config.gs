@@ -44,7 +44,7 @@ var APP_CONFIG = {
   MOUSER_REQUEST_INTERVAL_MS: 2100,     // Mouser 요청 간격 (30 req/min 대응)
   MAX_RESULTS_PER_SEARCH: 10,           // API 검색 당 최대 결과 수
   GLM_API_BASE_URL: 'https://open.bigmodel.cn/api/paas/v4/chat/completions',
-  GLM_MODEL: 'glm-4-flash'             // 사용할 GLM 모델 (빠른 응답용)
+  GLM_MODEL: 'glm-4.7-flash'           // 사용할 GLM 모델 (2026-01 이후 최신 Flash 모델)
 };
 
 // Node.js 테스트 환경에서의 모듈 내보내기

@@ -41,7 +41,7 @@ try {
 
 // ── APP_CONFIG ──
 assert('config_ttl', APP_CONFIG.CACHE_TTL_SECONDS, 3600);
-assert('config_model', APP_CONFIG.GLM_MODEL, 'glm-4-flash');
+assert('config_model', APP_CONFIG.GLM_MODEL, 'glm-4.7-flash');
 
 console.log(`  Config: ${passed}/${total}`);
 console.log(JSON.stringify({ passed, total, failedTest, targetFn }));

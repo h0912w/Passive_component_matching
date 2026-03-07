@@ -55,7 +55,7 @@ async function runTests() {
       'open.bigmodel.cn',
       '/api/paas/v4/chat/completions',
       {
-        model: 'glm-4-flash',
+        model: 'glm-4.7-flash',
         messages: [
           { role: 'system', content: '전자 부품 전문가입니다. 저항 정보를 JSON만으로 반환하세요.' },
           { role: 'user', content: '다음에서 저항값(ohm), 패키지, 오차를 추출: "1킬로옴 0402 5퍼센트"\nJSON: {"resistance_ohms":number,"package":"string","tolerance_percent":number}' }
@@ -93,7 +93,7 @@ async function runTests() {
       'open.bigmodel.cn',
       '/api/paas/v4/chat/completions',
       {
-        model: 'glm-4-flash',
+        model: 'glm-4.7-flash',
         messages: [{ role: 'user', content: 'Say "hello" in JSON: {"greeting":"hello"}' }],
         temperature: 0.1
       },

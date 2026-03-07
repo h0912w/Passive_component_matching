@@ -27,7 +27,7 @@ function callGlm(messages, options) {
  */
 function _callGlm(messages, options, fetchSvc, apiKey) {
   options = options || {};
-  var model = options.model || APP_CONFIG.GLM_MODEL || 'glm-4-flash';
+  var model = options.model || APP_CONFIG.GLM_MODEL || 'glm-4.7-flash';
   var temperature = options.temperature !== undefined ? options.temperature : 0.1;
   var url = APP_CONFIG.GLM_API_BASE_URL || 'https://open.bigmodel.cn/api/paas/v4/chat/completions';
 
