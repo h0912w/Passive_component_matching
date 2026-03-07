@@ -218,3 +218,5 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-07 | CLAUDE.md 푸시 전 필수 절차 수정 — 수동 main force push 규칙을 "GitHub Actions가 자동 처리"로 정정 |
 | 2026-03-07 | **규칙 확립**: 커밋 시 반드시 session-context.md에 대화 내용(결정사항+Why) 함께 업데이트 |
 | 2026-03-07 | 브랜치 혼동 발생 (review-project-status-kJ0I4 ↔ resistor-lookup-tool-2ewOv) → resistor-lookup-tool-2ewOv 기준으로 reset |
+| 2026-03-07 | **Tier 1 mock 테스트 전체 실행** — 110/110 통과 ✅ (ValueParser 24, PackageConverter 17, StockRanker 4, OutputFormatter 14, ErrorHandler 10, Config 5, CacheManager 6, MouserClient 7, GlmClient 3, NlpParser 6, PackageListBuilder 5, Integration 9) |
+| 2026-03-07 | docs/test-report.md 최종 업데이트 날짜 갱신 후 push |
