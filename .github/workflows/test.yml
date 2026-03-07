@@ -87,50 +87,19 @@ jobs:
 
       # Step 2: main 체크아웃 후 test-report.md만 추가 커밋 (작업 브랜치 불변)
       - name: Commit test-report.md to main only
+        env:
+          CI_DATE: ${{ github.event.head_commit.timestamp }}
+          CI_BRANCH: ${{ github.ref_name }}
+          CI_SHA: ${{ github.sha }}
+          CI_REPO: ${{ github.repository }}
+          CI_RESULT: ${{ steps.test_output.outputs.RESULT }}
+          CI_TEST_OUTPUT_FILE: /tmp/test-output.txt
         run: |
           git fetch origin main
           git checkout main
 
-          mkdir -p docs
-          RESULT="${{ steps.test_output.outputs.RESULT }}"
-          BADGE="✅ PASSED"
-          if [ "$RESULT" = "failed" ]; then BADGE="❌ FAILED"; fi
-
-          # 최종 출력물 표 + 테스트 결과를 test-report.md에 기록
-          cat > docs/test-report.md << 'REPORT_EOF'
-# 테스트 결과 리포트
-
-## 최종 출력물 (사용자가 실제로 받아보는 결과)
-
-> 사용자가 저항 값 목록을 붙여넣으면 아래와 같은 6열 테이블이 출력됩니다.
-
-| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description |
-|-----------|------------|------------|----------|-------------|-------------|
-| `1k 1005 5%` | 1kΩ | 0402 (1005) | 5% | RC0402JR-071KL | RES SMD 1K OHM 5% 1/16W 0402 |
-| `10k/0603/1%` | 10kΩ | 0603 (1608) | 1% | RC0603FR-0710KL | RES SMD 10K OHM 1% 1/10W 0603 |
-| `100R 0805 5%` | 100Ω | 0805 (2012) | 5% | CRCW0805100RJNEA | RES SMD 100 OHM 5% 1/8W 0805 |
-| `4.7k_0402_1%` | 4.7kΩ | 0402 (1005) | 1% | RC0402FR-074K7L | RES SMD 4.7K OHM 1% 1/16W 0402 |
-| `2.2M 1206 5%` | 2.2MΩ | 1206 (3216) | 5% | RC1206JR-072M2L | RES SMD 2.2M OHM 5% 1/4W 1206 |
-| `칩저항 33옴 0603` | 33Ω | 0603 (1608) | — | RC0603JR-0733RL | RES SMD 33 OHM 5% 1/10W 0603 |
-
-> **부품명만 복사** 버튼을 누르면 MPN 목록만 클립보드에 복사됩니다.
-
----
-
-REPORT_EOF
-
-          cat >> docs/test-report.md << EOF
-- **Date**: $(date -u '+%Y-%m-%d %H:%M UTC')
-- **Branch**: ${{ github.ref_name }}
-- **Commit**: [${{ github.sha }}](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
-- **Result**: ${BADGE}
-
-## Tier 1 Mock Test Output
-
-\`\`\`
-$(tail -30 /tmp/test-output.txt)
-\`\`\`
-EOF
+          # Node.js 스크립트로 test-report.md 생성 (YAML heredoc 특수문자 문제 우회)
+          node scripts/generate-ci-report.js
 
           git add docs/test-report.md
           git diff --cached --quiet || git commit -m "docs: update test-report [skip ci]"
