@@ -20,6 +20,27 @@
 >    ```
 > 3. **session-context.md 업데이트 없이 코드만 커밋하는 것은 금지.**
 
+> **⚠️ GitHub Actions sync-to-main이 동작하려면 (리포지토리 1회 설정 필수)**:
+>
+> `GITHUB_TOKEN`은 기본적으로 **Read-only** 권한이다. 아래 설정을 하지 않으면
+> sync-to-main 잡이 `git push origin HEAD:main --force`에서 **403 Permission Denied**로 실패한다.
+>
+> **설정 방법**:
+> 1. GitHub 리포지토리 → **Settings** → **Actions** → **General**
+> 2. 스크롤 맨 아래 **"Workflow permissions"** 섹션
+> 3. **"Read and write permissions"** 선택 (기본값이 "Read repository contents..." 이므로 변경 필요)
+> 4. **Save** 클릭
+>
+> **왜 필요한가**: YAML에 `permissions: contents: write`를 선언해도,
+> 리포지토리 레벨 설정이 Read-only이면 GitHub가 쓰기를 차단한다.
+> 이 설정이 상위 권한이므로 반드시 먼저 변경해야 한다.
+>
+> **확인 방법**: push 후 GitHub → Actions 탭 → "Sync to main" 잡이 녹색 체크(✅)인지 확인.
+> 실패(❌)면 위 설정을 다시 확인할 것.
+>
+> **교훈 (2026-03-07)**: 이 설정 없이 "추가 작업 없다"고 잘못 안내한 적 있음.
+> CI/CD 설정은 반드시 **실제 동작 확인** 후에만 "완료"로 판단할 것.
+
 ## 프로젝트 개요
 회로 설계 시 저항 Value값(예: `1k 1005 5%`)을 입력하면 Mouser API를 통해 실제 구매 가능한 부품을 자동 매칭하는 도구.
 사용자가 수십 개의 저항 값을 한 번에 붙여넣으면, 실시간 재고가 있는 정확한 부품명과 설명을 테이블로 출력한다.
