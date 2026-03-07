@@ -223,3 +223,5 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-07 | **[실패] sync-to-main 잡이 main에 반영되지 않음** — 원인: GITHUB_TOKEN 기본 권한이 Read-only. YAML에 `permissions: contents: write` 선언만으로는 부족. 리포지토리 설정(Settings → Actions → General → Workflow permissions)에서 "Read and write permissions"으로 변경 필요 |
 | 2026-03-07 | **[교훈] CI/CD 설정은 "실제 동작 확인" 전까지 완료로 판단 금지** — 확인 없이 "추가 작업 없다"고 단언해서 사용자에게 거짓 안내. CLAUDE.md에 Workflow permissions 설정 필수 절차 + 교훈 추가 |
 | 2026-03-07 | **[대책]** CLAUDE.md에 sync-to-main 동작 전제조건(Workflow permissions 변경) 명시. push 후 Actions 탭에서 녹색 체크 확인하는 절차 추가. "추가 작업 없다"는 발언은 실제 확인 후에만 하도록 규칙화 |
+| 2026-03-07 | **[사용자 조치]** Settings → Actions → General → Workflow permissions → "Read and write permissions" 변경 완료 |
+| 2026-03-07 | **[검증 푸시]** sync-to-main 동작 여부 확인을 위해 session-context.md 업데이트 후 재푸시 — Actions 탭에서 "Sync to main" 잡 녹색 체크 확인 예정 |
