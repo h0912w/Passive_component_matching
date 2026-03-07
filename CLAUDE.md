@@ -711,6 +711,15 @@ Total: 50/50 passed ✅
 
 ## 개발 규칙
 
+### test-report.md 작성 규칙
+
+> **필수**: `docs/test-report.md` 최상단에는 항상 **사용자가 실제로 받아보는 최종 출력물 표**가 위치해야 한다.
+
+- 최상단 섹션: `## 최종 출력물 (사용자가 실제로 받아보는 결과)`
+- 내용: 6열 테이블 예시 (`입력 원본 / 추출 저항값 / 추출 패키지 / 추출 오차 / 부품명(MPN) / Description`)
+- 목적: 테스트 리포트를 열었을 때 개발자가 "이 도구가 뭘 만드는지"를 즉시 확인 가능하게
+- 자동 생성 시에도 이 섹션은 반드시 포함시킬 것 (GitHub Actions sync-to-main 잡의 test-report 생성 코드 포함)
+
 ### 코드 작성 규칙 (TestRunner가 테스트할 수 있도록 강제)
 1. **순수 함수 우선**: Apps Script API를 사용하지 않는 로직은 반드시 독립 함수로 분리
 2. **DI 패턴 필수**: `UrlFetchApp`, `CacheService`, `PropertiesService` 등은 파라미터로 주입
