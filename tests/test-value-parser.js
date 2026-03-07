@@ -74,6 +74,72 @@ total++;
 if (formatResistanceDisplay(47) === '47Ω') { passed++; }
 else { console.log(`  ❌ display_47: got ${formatResistanceDisplay(47)}`); if (!failedTest) { failedTest = 'display_47'; targetFn = 'formatResistanceDisplay'; } }
 
+// ── 랜덤 E24 값 테스트 (매 실행마다 다른 값) ──
+const E24 = [1.0, 1.1, 1.2, 1.3, 1.5, 1.6, 1.8, 2.0, 2.2, 2.4, 2.7, 3.0,
+             3.3, 3.6, 3.9, 4.3, 4.7, 5.1, 5.6, 6.2, 6.8, 7.5, 8.2, 9.1];
+// 형식: { label, ohmsMultiplier, strFn }
+// strFn(e24val) → 입력 문자열의 저항 부분
+const SCALES = [
+  { label: '1kΩ 대역',   ohmsMultiplier: 1000,    strFn: v => `${v}k`            },
+  { label: '10kΩ 대역',  ohmsMultiplier: 10000,   strFn: v => `${v*10}k`         },
+  { label: '100kΩ 대역', ohmsMultiplier: 100000,  strFn: v => `${Math.round(v*100)}k` },
+  { label: '1MΩ 대역',   ohmsMultiplier: 1000000, strFn: v => `${v}M`            },
+  { label: '100Ω 대역',  ohmsMultiplier: 100,     strFn: v => `${Math.round(v*100)}R` },
+];
+const PKGS = ['0402', '0603', '0805', '1206', '0201'];
+const TOLS = ['1%', '5%'];
+
+// LCG 시드 기반 의사난수 (재현 가능)
+const SEED = Date.now();
+let _rng = SEED;
+function rng() {
+  _rng = (Math.imul(1664525, _rng) + 1013904223) >>> 0;
+  return _rng / 0x100000000;
+}
+function pick(arr) { return arr[Math.floor(rng() * arr.length)]; }
+
+console.log(`  [랜덤 시드: ${SEED}]`);
+console.log('  ┌─────────────────────────────────────────────────────────────────────┐');
+console.log('  │ 랜덤 E24 테스트 입력값 (매 실행마다 다름)                          │');
+console.log('  ├────┬──────────────────────┬────────────────┬────────────────────────┤');
+console.log('  │ #  │ 입력 문자열          │ 예상 저항값    │ 결과                   │');
+console.log('  ├────┼──────────────────────┼────────────────┼────────────────────────┤');
+
+for (let i = 0; i < 5; i++) {
+  const e24  = pick(E24);
+  const scale = pick(SCALES);
+  const pkg  = pick(PKGS);
+  const tol  = pick(TOLS);
+
+  const resistStr = scale.strFn(e24);
+  const inputStr  = `${resistStr} ${pkg} ${tol}`;
+  const expectedOhms = Math.round(e24 * scale.ohmsMultiplier * 1000) / 1000;
+
+  const result = parseResistorInput(inputStr);
+  total++;
+  const gotOhms = result.resistance_ohms;
+  const ok = result.parse_success && Math.abs(gotOhms - expectedOhms) < 0.01;
+
+  const statusStr = ok ? '✅ PASS' : `❌ FAIL (got ${gotOhms})`;
+  const inputPad  = inputStr.padEnd(20);
+  const ohmsPad   = `${expectedOhms}Ω`.padEnd(14);
+  console.log(`  │ ${String(i+1).padEnd(2)} │ ${inputPad} │ ${ohmsPad} │ ${statusStr.padEnd(22)} │`);
+
+  if (ok) {
+    passed++;
+  } else {
+    if (!failedTest) {
+      failedTest = `random_e24_${i+1}`;
+      targetFn   = 'parseResistorInput';
+      failInput  = inputStr;
+      failExpected = expectedOhms;
+      failActual   = gotOhms;
+      failHint   = `E24 랜덤 저항값 파싱 실패 (시드: ${SEED}, 스케일: ${scale.label})`;
+    }
+  }
+}
+console.log('  └────┴──────────────────────┴────────────────┴────────────────────────┘');
+
 // ── 결과 출력 ──
 console.log(`  ValueParser: ${passed}/${total}`);
 console.log(JSON.stringify({ passed, total, failedTest, targetFn, input: failInput, expected: failExpected, actual: failActual, hint: failHint }));

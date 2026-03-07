@@ -124,6 +124,43 @@ try {
   else { console.log(`  ❌ empty_error: ${e.message}`); if (!failedTest) { failedTest = 'empty_error'; targetFn = '_processInputs'; } }
 }
 
+// ── 테스트 4: 랜덤 E24 입력 3개 동시 파이프라인 통과 검증 ──
+const E24_INT = [1.0, 1.5, 2.2, 3.3, 4.7, 6.8, 10, 22, 47, 100];
+const PKGS_INT = ['0402', '0603', '0805', '1206'];
+const TOLS_INT = ['1%', '5%'];
+const SEED_INT = Date.now();
+let _r = SEED_INT;
+function rng2() { _r = (Math.imul(1664525, _r) + 1013904223) >>> 0; return _r / 0x100000000; }
+function pick2(a) { return a[Math.floor(rng2() * a.length)]; }
+
+const randomInputs = [];
+for (let i = 0; i < 3; i++) {
+  const v   = pick2(E24_INT);
+  const pkg = pick2(PKGS_INT);
+  const tol = pick2(TOLS_INT);
+  const str = v >= 1000 ? `${v/1000}M` : v >= 1 ? `${v}k` : `${v}R`;
+  randomInputs.push(`${str} ${pkg} ${tol}`);
+}
+const randomInputStr = randomInputs.join('\n');
+
+console.log(`  [랜덤 시드: ${SEED_INT}]`);
+console.log(`  ┌─────────────────────────────────────────────────┐`);
+console.log(`  │ 랜덤 통합 테스트 입력 (매 실행마다 다름)       │`);
+randomInputs.forEach((s, i) => {
+  console.log(`  │  [${i+1}] ${s.padEnd(43)} │`);
+});
+console.log(`  └─────────────────────────────────────────────────┘`);
+
+const result4 = _processInputs(randomInputStr, mockFetch, mockCacheService);
+// 3개 입력 → 3개 결과 (mock Mouser 응답으로 모두 성공)
+assert('random_pipeline_total',   result4.totalCount,   3);
+assert('random_pipeline_success', result4.successCount, 3);
+// 각 row에 mpn, resistance, package, tolerance 필드가 있는지 확인
+result4.rows.forEach((row, i) => {
+  assert(`random_row${i+1}_has_mpn`, typeof row.mpn, 'string');
+  assert(`random_row${i+1}_has_resistance`, typeof row.resistance, 'string');
+});
+
 console.log(`  Integration: ${passed}/${total}`);
 console.log(JSON.stringify({ passed, total, failedTest, targetFn }));
 process.exit(passed === total ? 0 : 1);
