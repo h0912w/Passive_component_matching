@@ -225,3 +225,4 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-07 | **[대책]** CLAUDE.md에 sync-to-main 동작 전제조건(Workflow permissions 변경) 명시. push 후 Actions 탭에서 녹색 체크 확인하는 절차 추가. "추가 작업 없다"는 발언은 실제 확인 후에만 하도록 규칙화 |
 | 2026-03-07 | **[사용자 조치]** Settings → Actions → General → Workflow permissions → "Read and write permissions" 변경 완료 |
 | 2026-03-07 | **[검증 푸시]** sync-to-main 동작 여부 확인을 위해 session-context.md 업데이트 후 재푸시 — Actions 탭에서 "Sync to main" 잡 녹색 체크 확인 예정 |
+| 2026-03-07 | **[2차 실패 원인]** GitHub Actions가 전혀 실행 안 됨 — `branches: ['*']`에서 `*`는 슬래시(`/`) 포함 브랜치명(`claude/xxx-yyy`)에 매칭 안 됨. `branches: ['**']`로 수정 (`**`은 슬래시 포함 전체 매칭). test.yml 수정 후 재푸시. |
