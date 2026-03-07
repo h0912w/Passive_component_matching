@@ -77,7 +77,7 @@ function runSuite(suite) {
   try {
     const output = execSync(`node "${filePath}"`, {
       encoding: 'utf8',
-      timeout:  suite.live ? 120000 : 30000,
+      timeout:  suite.live ? 600000 : 30000,  // live: 100입력 × 2.2s + GLM배치 ≈ 5분 → 10분으로 여유
       cwd:      path.join(__dirname, '..')
     });
     const lines  = output.trim().split('\n');

@@ -35,14 +35,19 @@ if (!GLM_KEY || !MOUSER_KEY) {
 
 const REPORTS_DIR = path.join(__dirname, 'reports');
 
-// ── 카테고리별 생성 개수 ──
-// 각 카테고리마다 GLM을 별도 호출하여 다양성 극대화
+// ── 배치 설정 ─────────────────────────────────────────────────────────────
+// 카테고리당 BATCH_COUNT번 GLM 호출, 매 호출마다 BATCH_SIZE개 생성
+// 총 입력 수: 4 카테고리 × BATCH_COUNT × BATCH_SIZE
+const BATCH_SIZE  = 5;   // GLM이 한 번에 생성하는 항목 수
+const BATCH_COUNT = 5;   // 카테고리당 배치 횟수 → 카테고리당 25개, 전체 100개
+
+// ── 카테고리 정의 ─────────────────────────────────────────────────────────
 const CATEGORIES = [
   {
     id:    'structured',
     label: '구조적 표준 입력',
-    count: 3,
-    prompt: `전자 BOM 작성자가 저항값을 입력하는 표준 형식 3개를 생성하세요.
+    count: BATCH_SIZE * BATCH_COUNT,
+    prompt: `전자 BOM 작성자가 저항값을 입력하는 표준 형식 ${BATCH_SIZE}개를 생성하세요.
 
 다양성 요구사항:
 - 구분자: 공백/슬래시/언더바 중 랜덤
@@ -51,35 +56,34 @@ const CATEGORIES = [
 - 패키지: 0201/0402/0603/0805/1005/1206/2012 중 랜덤
 - 오차: 0.1%/1%/5% 중 랜덤
 
-예시 (이런 다양성이 나와야 함):
+예시:
 "4R7_0402_1%"
 "5%/10k/0603"
 "1206 2.2M 5%"
 "0.1%/100k/0805"
 "1k5 1005 5%"
 
-JSON 배열만 반환: ["...", "...", "..."]`
+JSON 배열만 반환 (정확히 ${BATCH_SIZE}개): ["...", ...]`
   },
   {
     id:    'korean',
     label: '한국어 자연어 입력',
-    count: 3,
-    prompt: `한국 엔지니어가 저항값을 한국어로 입력하는 형식 3개를 생성하세요.
+    count: BATCH_SIZE * BATCH_COUNT,
+    prompt: `한국 엔지니어가 저항값을 한국어로 입력하는 형식 ${BATCH_SIZE}개를 생성하세요.
 
 다양성 요구사항:
 - 순수 한국어: "1킬로옴 0402 5퍼센트", "0805 사이즈 100옴 1% 오차"
 - 한영 혼합: "저항 4.7k 0603 1%", "칩저항 10K 1206"
 - 단위 혼용: "4.7킬로 0402", "100 옴 0603 5%", "2.2 메가옴 1206 5%"
-- 오차 누락 케이스 1개 포함 (오차를 안 쓰는 경우)
-- 패키지 누락 케이스 1개 포함
+- 일부는 오차 누락, 일부는 패키지 누락
 
-JSON 배열만 반환: ["...", "...", "..."]`
+JSON 배열만 반환 (정확히 ${BATCH_SIZE}개): ["...", ...]`
   },
   {
     id:    'sloppy',
     label: '오염된 실사용 입력',
-    count: 3,
-    prompt: `실제 사용자가 대충 입력하거나 다른 곳에서 복붙할 때 생기는 지저분한 형식 3개를 생성하세요.
+    count: BATCH_SIZE * BATCH_COUNT,
+    prompt: `실제 사용자가 대충 입력하거나 다른 곳에서 복붙할 때 생기는 지저분한 형식 ${BATCH_SIZE}개를 생성하세요.
 
 다양성 요구사항:
 - 앞뒤 공백: "  1k 0402 5%  "
@@ -90,15 +94,15 @@ JSON 배열만 반환: ["...", "...", "..."]`
 - 콤마 포함: "1,000 ohm 0402 1%"
 - 오차에 ± 포함: "10k 0603 ±1%"
 
-JSON 배열만 반환 (각 항목은 앞뒤 공백이나 특수문자 포함 가능): ["...", "...", "..."]`
+JSON 배열만 반환 (각 항목은 앞뒤 공백이나 특수문자 포함 가능, 정확히 ${BATCH_SIZE}개): ["...", ...]`
   },
   {
     id:    'edge',
     label: '엣지 케이스',
-    count: 3,
-    prompt: `저항값 파서를 테스트하기 위한 까다로운 엣지 케이스 3개를 생성하세요.
+    count: BATCH_SIZE * BATCH_COUNT,
+    prompt: `저항값 파서를 테스트하기 위한 까다로운 엣지 케이스 ${BATCH_SIZE}개를 생성하세요.
 
-반드시 포함해야 할 유형 (3개 중 각각 다른 유형):
+아래 3가지 유형에서 골고루 생성하세요 (각 유형 1-2개):
 1. 필드 누락 — 오차만 없거나 패키지만 없는 경우:
    예: "1k 0402" (오차 없음), "4.7k 5%" (패키지 없음)
 2. EIA 소수점 표기 — 단위를 소수점 대신 사용:
@@ -106,7 +110,7 @@ JSON 배열만 반환 (각 항목은 앞뒤 공백이나 특수문자 포함 가
 3. 극단값 — 아주 작거나 아주 큰 저항:
    예: "1R 0201 1%", "10M 1206 5%", "0R1 0402 5%"
 
-JSON 배열만 반환: ["...", "...", "..."]`
+JSON 배열만 반환 (정확히 ${BATCH_SIZE}개): ["...", ...]`
   }
 ];
 
@@ -138,36 +142,58 @@ function httpsPost(hostname, urlPath, body, headers) {
   });
 }
 
-// ─── Step 1: GLM으로 카테고리별 랜덤 저항 스펙 생성 ──────────────────────
+// ─── Step 1: GLM으로 카테고리별 랜덤 저항 스펙 생성 (배치 방식) ───────────
+// 카테고리당 BATCH_COUNT번 GLM 호출 → 매 호출마다 BATCH_SIZE개 생성
+// 배치 간 1.5초 딜레이로 rate limit 대응
 async function generateCategorySpecs(category) {
-  const resp = await httpsPost(
-    'open.bigmodel.cn',
-    '/api/paas/v4/chat/completions',
-    {
-      model: 'glm-4.7-flash',
-      messages: [
-        {
-          role: 'system',
-          content: '당신은 전자 부품 테스트 데이터 생성 전문가입니다. 요청된 형식의 테스트 데이터만 JSON 배열로 반환합니다. 설명이나 부연 텍스트는 절대 출력하지 않습니다.'
-        },
-        { role: 'user', content: category.prompt }
-      ],
-      temperature: 0.95  // 높은 온도로 최대 다양성 확보
-    },
-    { 'Authorization': 'Bearer ' + GLM_KEY }
-  );
+  const all = [];
+  const batchCount = Math.ceil(category.count / BATCH_SIZE);
 
-  if (resp.code !== 200) {
-    throw new Error(`GLM API 오류 (HTTP ${resp.code}): ${JSON.stringify(resp.body).substring(0, 200)}`);
+  for (let b = 0; b < batchCount; b++) {
+    try {
+      const resp = await httpsPost(
+        'open.bigmodel.cn',
+        '/api/paas/v4/chat/completions',
+        {
+          model: 'glm-4.7-flash',
+          messages: [
+            {
+              role: 'system',
+              content: '당신은 전자 부품 테스트 데이터 생성 전문가입니다. 요청된 형식의 테스트 데이터만 JSON 배열로 반환합니다. 설명이나 부연 텍스트는 절대 출력하지 않습니다.'
+            },
+            { role: 'user', content: category.prompt }
+          ],
+          temperature: 0.95  // 높은 온도로 최대 다양성 확보
+        },
+        { 'Authorization': 'Bearer ' + GLM_KEY }
+      );
+
+      if (resp.code !== 200) {
+        console.log(`            ⚠️  배치 ${b + 1}/${batchCount} GLM 오류 (HTTP ${resp.code}): 건너뜀`);
+      } else {
+        const content = resp.body.choices[0].message.content;
+        const match = content.match(/\[[\s\S]*\]/);
+        if (match) {
+          const arr = JSON.parse(match[0]);
+          if (Array.isArray(arr)) {
+            all.push(...arr.slice(0, BATCH_SIZE));
+            console.log(`            배치 ${b + 1}/${batchCount} ✅ ${arr.slice(0, BATCH_SIZE).length}개 (누적 ${all.length}개)`);
+          }
+        } else {
+          console.log(`            ⚠️  배치 ${b + 1}/${batchCount} JSON 파싱 실패: 건너뜀`);
+        }
+      }
+    } catch (err) {
+      console.log(`            ⚠️  배치 ${b + 1}/${batchCount} 오류: ${err.message}`);
+    }
+
+    // 배치 간 rate limit 대응 (1.5초)
+    if (b < batchCount - 1) {
+      await new Promise(r => setTimeout(r, 1500));
+    }
   }
 
-  const content = resp.body.choices[0].message.content;
-  const match = content.match(/\[[\s\S]*\]/);
-  if (!match) throw new Error(`JSON 배열 추출 실패: ${content.substring(0, 200)}`);
-
-  const arr = JSON.parse(match[0]);
-  if (!Array.isArray(arr)) throw new Error('응답이 배열이 아님');
-  return arr.slice(0, category.count);  // 요청 개수만큼만
+  return all.slice(0, category.count);
 }
 
 async function generateRandomSpecs() {
@@ -179,7 +205,8 @@ async function generateRandomSpecs() {
     console.log(`     [1-${i+1}] 카테고리 "${cat.label}" ${cat.count}개 생성 중...`);
     try {
       const specs = await generateCategorySpecs(cat);
-      console.log(`            ✅ ${specs.length}개: ${specs.map(s => `"${s}"`).join(', ')}`);
+      const preview = specs.slice(0, 3).map(s => `"${s}"`).join(', ');
+      console.log(`            ✅ 총 ${specs.length}개 생성 완료 (예: ${preview}${specs.length > 3 ? ' ...' : ''})`);
       for (const s of specs) allSpecs.push({ input: s, category: cat.id, categoryLabel: cat.label });
       categoryLog.push({ id: cat.id, label: cat.label, count: specs.length, specs });
     } catch (err) {
