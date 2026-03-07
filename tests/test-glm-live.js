@@ -85,6 +85,9 @@ async function runTests() {
     results.hint = err.message;
   }
 
+  // Rate limit 방지: 연속 호출 사이 3초 대기
+  await new Promise(resolve => setTimeout(resolve, 3000));
+
   // ── 테스트 2: 응답 구조 확인 ──
   results.total++;
   console.log('  [2] GLM 응답 구조 확인 (choices, usage)');

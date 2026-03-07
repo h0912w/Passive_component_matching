@@ -228,3 +228,4 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-07 | **[2차 실패 원인]** GitHub Actions가 전혀 실행 안 됨 — `branches: ['*']`에서 `*`는 슬래시(`/`) 포함 브랜치명(`claude/xxx-yyy`)에 매칭 안 됨. `branches: ['**']`로 수정 (`**`은 슬래시 포함 전체 매칭). test.yml 수정 후 재푸시. |
 | 2026-03-07 | **[3차 확인]** GitHub Actions 실행 확인 ✅ — Tier1 ✅, Sync to main ✅, Tier2 ❌. Tier2 실패 원인 분석 중 — API 키는 정상 등록됨(GLM_API_KEY, MOUSER_API_KEY). 상세 로그 확인 필요. |
 | 2026-03-07 | **[Tier2 실패 원인]** GLM 모델명 deprecated — `glm-4-flash` → HTTP 400 "模型不存在". ZhipuAI가 2026-01에 `glm-4.7-flash` 출시하며 구 모델 폐기. Config.gs, GlmClient.gs, test-glm-live.js, test-random-validation.js, test-config.js, CLAUDE.md, api-integration.md 전체 모델명 수정 완료. |
+| 2026-03-07 | **[Tier2 잔여 실패]** GLM-Live 1/2 — glm_response_structure 테스트 HTTP 500. 원인: 연속 GLM API 호출 시 Rate Limit. test-glm-live.js 테스트 2 실행 전 3초 딜레이 추가로 해결. |
