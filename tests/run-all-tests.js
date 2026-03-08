@@ -111,6 +111,25 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
   const dateStr = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'long' });
   const isoStr = now.toISOString();
 
+  // 랜덤 검증 테이블 로드 (LIVE 모드일 때만)
+  let randomValidationTable = '';
+  if (mode === 'live' && fs.existsSync(RANDOM_VALID_TABLE_PATH)) {
+    const tableContent = fs.readFileSync(RANDOM_VALID_TABLE_PATH, 'utf8');
+    const lines = tableContent.split('\n').filter(line => line.trim());
+    if (lines.length > 2) {
+      randomValidationTable = lines.join('\n');
+    }
+  }
+
+  // 최종 출력물 섹션 (랜덤 검증 테이블이 있으면 사용, 없으면 예시)
+  const finalOutputSection = randomValidationTable ?
+    '## 최종 출력물 (사용자가 실제로 받아보는 결과)\n\n' + randomValidationTable + '\n\n' :
+    '## 최종 출력물 (사용자가 실제로 받아보는 결과)\n\n' +
+    '| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description | MPN 저항값 | MPN 패키지 | MPN 오차 | 일치 확인 |\n' +
+    '|-----------|------------|------------|----------|-------------|-------------|------------|-----------|---------|---------|\n' +
+    '| (예시) 1k 0402 5% | 1kΩ | 0402 (0402) | 5% | RCA04021K00JNED | RES SMD 1K OHM 5% 1/16W 0402 | 1kΩ | 0402 | 5% | ✅ |\n\n' +
+    '> **참고**: 실제 데이터는 Tier 2 Live 테스트(npm run test:live) 실행 후 docs/random-validation-table.md를 참고하세요.\n\n';
+
   // 개별 테스트 결과
   const testResults = results.map(r => {
     const icon = r.status === 'PASS' ? '✅' : r.status === 'SKIP' ? '⏭️' : '❌';
@@ -127,10 +146,15 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
     `> **결과**: ${totalPassed === totalTests ? '전체 통과 ✅' : `부분 통과 (${totalPassed}/${totalTests})`}`,
     `> **통과**: ${totalPassed}/${totalTests} (${totalTests > 0 ? ((totalPassed/totalTests)*100).toFixed(1) : 0}%)`,
     '',
-    `## 테스트 결과`,
+    '---',
     '',
-    `| 테스트 스위트 | 결과 |`,
-    `|--------------|------|`,
+    finalOutputSection,
+    '---',
+    '',
+    '## 테스트 결과',
+    '',
+    '| 테스트 스위트 | 결과 |',
+    '|--------------|------|',
     testResults,
     ''
   ].join('\n');

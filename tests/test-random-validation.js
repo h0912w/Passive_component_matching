@@ -236,8 +236,8 @@ function generateReport(specObjs, pipelineResults, startTime, categoryLog) {
   md += `# Passive Component Matching — 검증 리포트\n\n`;
   md += `> 실행 시각: ${endTime.toISOString()} | 소요: ${elapsed}초 | 입력: ${specObjs.length}개 | 성공: ${successRows.length}개 | 실패: ${failRows.length}개\n\n`;
   md += '## 매칭 결과\n\n';
-  md += `| 입력 원본 | 입력 저항값 | 입력 패키지 | 입력 오차 | 부품명 (MPN) | Description | MPN 저항값 | MPN 패키지 | MPN 오차 | 검증 |\n`;
-  md += `|-----------|-----------|-----------|---------|-------------|-------------|----------|--------|------|\n`;
+  md += `| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description | MPN 저항값 | MPN 패키지 | MPN 오차 | 일치 확인 |\n`;
+  md += `|-----------|------------|------------|----------|-------------|-------------|----------|--------|------|\n`;
 
   for (const r of pipelineResults) {
     const o = r.output;
