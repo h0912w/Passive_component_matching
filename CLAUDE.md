@@ -506,13 +506,12 @@ cp .env.example .env
 # 최초 1회: 의존성 설치
 npm install
 
-# Tier 1: mock 테스트 전체 실행 (API 키 불필요)
+# 전체 테스트 실행 (Tier 1 + Tier 2 모두 실행)
 npm test
 # 또는: node tests/run-all-tests.js
 
-# Tier 2: 실제 API 호출 포함 (.env에 키 필요)
-npm run test:live
-# 또는: node tests/run-all-tests.js --live
+> **중요**: 테스트는 항상 Tier 1 (mock)과 Tier 2 (live API)를 함께 실행합니다.
+> --live 플래그는 사용하지 않습니다. .env에 API 키가 있으면 자동으로 Tier 2도 실행됩니다.
 
 # 개별 파일 테스트
 node tests/test-value-parser.js
@@ -521,13 +520,6 @@ node tests/test-stock-ranker.js
 node tests/test-output-formatter.js
 node tests/test-mpn-validator.js
 node tests/test-integration.js
-
-# 실제 API만 단독 실행
-node tests/test-mouser-live.js
-node tests/test-glm-live.js
-
-# 랜덤 검증 (GLM으로 랜덤 입력 생성 → Mouser 실제 검색 → 리포트 저장)
-node tests/test-random-validation.js
 
 # 실패 시 피드백 파일 확인
 cat tests/feedback/last-failure.json

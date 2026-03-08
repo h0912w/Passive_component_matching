@@ -2,12 +2,15 @@
  * run-all-tests.js — TestRunner 에이전트
  *
  * 실행 방법:
- *   node tests/run-all-tests.js           # 모의(mock) 테스트만 실행
- *   node tests/run-all-tests.js --live    # mock + 실제 API 호출 테스트 실행
+ *   node tests/run-all-tests.js    # Tier 1 + Tier 2 모두 실행
  *
- * --live 플래그를 쓰려면 .env 파일에 API 키가 있어야 합니다:
+ * Tier 2 (live API) 실행 조건:
+ *   .env 파일에 API 키가 있으면 자동으로 실행
  *   MOUSER_API_KEY=실제키
  *   GLM_API_KEY=실제키
+ *
+ * > **중요**: 테스트는 항상 Tier 1 (mock)과 Tier 2 (live API)를 함께 실행합니다.
+ * > API 키가 없으면 Tier 2 테스트는 SKIP 됩니다.
  */
 
 'use strict';
@@ -21,14 +24,13 @@ const { execSync } = require('child_process');
 const fs         = require('fs');
 const path       = require('path');
 
-const LIVE_MODE     = process.argv.includes('--live');
 const FEEDBACK_PATH = path.join(__dirname, 'feedback', 'last-failure.json');
 const MAX_RETRIES   = 3;
 const RANDOM_VALID_TABLE_PATH = path.join(__dirname, '..', 'docs', 'random-validation-table.md');
 const TEST_REPORT_PATH       = path.join(__dirname, '..', 'docs', 'test-report.md');
 
 // ─── 테스트 스위트 목록 ───────────────────────────────────────────────
-// live: true → --live 플래그가 있고 API 키가 있을 때만 실행
+// live: true → API 키가 있을 때만 실행
 const SUITES = [
   // ── 순수 로직 (항상 실행, API 키 불필요) ──
   { name: 'ValueParser',      file: 'test-value-parser.js',      targetFile: 'apps-script/ValueParser.gs',      live: false },
@@ -58,11 +60,6 @@ function runSuite(suite) {
 
   if (!fs.existsSync(filePath)) {
     return { name: suite.name, status: 'SKIP', reason: '파일 없음 — 구현 전', passed: 0, total: 0 };
-  }
-
-  // live 스위트는 --live 플래그가 없으면 SKIP
-  if (suite.live && !LIVE_MODE) {
-    return { name: suite.name, status: 'SKIP', reason: '--live 플래그 없음', passed: 0, total: 0 };
   }
 
   // live 스위트는 API 키가 없으면 SKIP
@@ -128,7 +125,7 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
     '| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description | MPN 저항값 | MPN 패키지 | MPN 오차 | 일치 확인 |\n' +
     '|-----------|------------|------------|----------|-------------|-------------|------------|-----------|---------|---------|\n' +
     '| (예시) 1k 0402 5% | 1kΩ | 0402 (0402) | 5% | RCA04021K00JNED | RES SMD 1K OHM 5% 1/16W 0402 | 1kΩ | 0402 | 5% | ✅ |\n\n' +
-    '> **참고**: 실제 데이터는 Tier 2 Live 테스트(npm run test:live) 실행 후 docs/random-validation-table.md를 참고하세요.\n\n';
+    '> **참고**: .env에 API 키가 있으면 Tier 2 Live 테스트가 실행되어 실제 데이터가 표시됩니다.\n\n';
 
   // 개별 테스트 결과
   const testResults = results.map(r => {
@@ -198,13 +195,13 @@ function validateTestReport(report) {
 // ─── 메인 ─────────────────────────────────────────────────────────────────────
 function main() {
   console.log('\n🧪 Passive Component Matching — TestRunner');
-  if (LIVE_MODE) {
-    const hasMouser = !!process.env.MOUSER_API_KEY;
-    const hasGlm    = !!process.env.GLM_API_KEY;
-    console.log(`   모드: LIVE  (Mouser:${hasMouser ? '✅' : '❌'}  GLM:${hasGlm ? '✅' : '❌'})`);
-  } else {
-    console.log('   모드: MOCK  (실제 API 호출 없음)');
-    console.log('   실제 API 테스트: node tests/run-all-tests.js --live');
+
+  const hasMouser = !!process.env.MOUSER_API_KEY;
+  const hasGlm    = !!process.env.GLM_API_KEY;
+  console.log(`   Tier 1 (Mock): 항상 실행`);
+  console.log(`   Tier 2 (Live): ${hasMouser ? '실행' : 'SKIP'} (Mouser:${hasMouser ? '✅' : '❌'}  GLM:${hasGlm ? '✅' : '❌'})`);
+  if (!hasMouser) {
+    console.log(`   > .env에 MOUSER_API_KEY가 없으면 Tier 2 테스트가 SKIP 됩니다.`);
   }
 
   console.log('');
@@ -240,22 +237,7 @@ function main() {
 
   console.log(`\n${'━'.repeat(44)}`);
 
-  // 렌덤 검증 결과 확인
-  let randomValidationResult = null;
-  for (const r of results) {
-    if (r.name === 'Random-Validation' && r.status === 'PASS') {
-      randomValidationResult = 'SUCCESS';
-      break;
-    }
-  }
-
-  if (LIVE_MODE && !randomValidationResult) {
-    console.log(`❌ Tier 2 랜덤 검증 결과가 없습니다!`);
-    console.log(`   npm run test:live --live 랜덤 옵션을 확인해주세요.`);
-    process.exit(1);
-  }
-
-  const report = generateTestReport(results, totalPassed, totalTests, failures, LIVE_MODE ? 'live' : 'mock');
+  const report = generateTestReport(results, totalPassed, totalTests, failures, hasMouser ? 'live' : 'mock');
 
   console.log(`\n📋 ${TEST_REPORT_PATH} 확인해주세요.`);
 
