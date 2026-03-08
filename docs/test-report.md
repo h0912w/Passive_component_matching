@@ -2,6 +2,79 @@
 
 ## Tier 2 Live API 테스트 결과 (실제 Mouser API 매칭)
 
+**결과**: ❌ FAILED
+
+> 랜덤 검증 리포트 없음 (API 키 누락 또는 테스트 실패)
+
+### Tier 2 전체 출력 로그 (마지막 80줄)
+
+```
+
+> passive-component-matching@1.0.0 test:live
+> node tests/run-all-tests.js --live
+
+
+🧪 Passive Component Matching — TestRunner
+   모드: LIVE  (Mouser:✅  GLM:✅)
+
+  [랜덤 시드: 1772950847809]
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 랜덤 E24 테스트 입력값 (매 실행마다 다름)                          │
+  ├────┬──────────────────────┬────────────────┬────────────────────────┤
+  │ #  │ 입력 문자열          │ 예상 저항값    │ 결과                   │
+  ├────┼──────────────────────┼────────────────┼────────────────────────┤
+  │ 1  │ 300R 0805 5%         │ 300Ω           │ ✅ PASS                 │
+  │ 2  │ 620k 0402 1%         │ 620000Ω        │ ✅ PASS                 │
+  │ 3  │ 6.8M 0805 5%         │ 6800000Ω       │ ✅ PASS                 │
+  │ 4  │ 240R 0201 1%         │ 240Ω           │ ✅ PASS                 │
+  │ 5  │ 20k 0603 5%          │ 20000Ω         │ ✅ PASS                 │
+  └────┴──────────────────────┴────────────────┴────────────────────────┘
+  [ValueParser]          29/29  ✅
+  [PackageConverter]     17/17  ✅
+  [StockRanker]          4/4    ✅
+  [OutputFormatter]      14/14  ✅
+  [ErrorHandler]         10/10  ✅
+  [Config]               5/5    ✅
+  [CacheManager]         6/6    ✅
+  [MouserClient]         7/7    ✅
+  [GlmClient]            3/3    ✅
+  [NlpParser]            6/6    ✅
+  [PackageListBuilder]   5/5    ✅
+  [랜덤 시드: 1772950848147]
+  ┌─────────────────────────────────────────────────┐
+  │ 랜덤 통합 테스트 입력 (매 실행마다 다름)       │
+  │  [1] 10k 0603 5%                                 │
+  │  [2] 1k 0402 1%                                  │
+  │  [3] 47k 0805 5%                                 │
+  └─────────────────────────────────────────────────┘
+TIER1_SAMPLE:[{"input":"10k 0603 5%","resistance":"10kΩ","package":"0201 (0603)","tolerance":"5%","mpn":"RC0402JR-071KL","description":"RES SMD 1K OHM 5% 1/16W 0402","success":true},{"input":"1k 0402 1%","resistance":"1kΩ","package":"01005 (0402)","tolerance":"1%","mpn":"RC0402JR-071KL","description":"RES SMD 1K OHM 5% 1/16W 0402","success":true},{"input":"47k 0805 5%","resistance":"47kΩ","package":"0805 (2012)","tolerance":"5%","mpn":"RC0402JR-071KL","description":"RES SMD 1K OHM 5% 1/16W 0402","success":true}]
+  [Integration]          17/17  ✅
+  [Mouser-Live]          2/2    ✅
+  [GLM-Live]             0/2    ❌
+    ↳ FAIL: glm_nlp_parse
+       Input:    null
+       Expected: null
+       Actual:   null
+  [Random-Validation]    0/1    ❌
+    ↳ FAIL: glm_spec_generation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 125/128 passed  (2 suite(s) failed)
+
+⚠️  피드백 → /home/runner/work/Passive_component_matching/Passive_component_matching/tests/feedback/last-failure.json
+   Fix: apps-script/GlmClient.gs :: _parseWithNlp
+   Hint: HTTP 429: {"error":{"code":"1302","message":"您的账户已达到速率限制，请您控制请求频率"}}
+   Retry: 1/3
+
+
+```
+
+---
+
+## Tier 1 Mock Test 결과
+
+## Tier 2 Live API 테스트 결과 (실제 Mouser API 매칭)
+
 **결과**: ✅ PASSED
 
 ## 2. 유저 수신 출력 (실제 프론트엔드 테이블과 동일)
