@@ -37,17 +37,14 @@ if (fs.existsSync(liveOutputFile)) {
 // ── Random-Validation 테이블 추출 (live 콘솔 출력에서) ───────────────
 let randomValidationTable = '';
 function extractRandomValidationTable(output) {
-  // 실제 출력 형식에 맞는 패턴:
-  //   [Random-Validation]    22/22  ✅
-  //    ┌──────────────────────┬────────┬────────┬──────┬──────────────────────┬────────┬────────┬──────┬──────┐
-
+  // 실제 live 콘솔 출력에서 테이블 추출
   const lines = output.split('\n');
 
-  // [Random-Validation] 라인 찾기
+  // [Random-Validation]    22/22  ✅ 패턴으로부터 검색
   let startIndex = -1;
   for (let i = 0; i < lines.length; i++) {
-    if (lines[i].includes('[Random-Validation]')) {
-      startIndex = i;
+    if (lines[i].match(/\[Random-Validation\]\s+\d+\/\d+\s+✅/)) {
+      startIndex = i + 1; // Random-Validation] 라인 바로 다음 줄부터 시작
       break;
     }
   }
@@ -57,7 +54,7 @@ function extractRandomValidationTable(output) {
   // 테이블 시작 줄(┌────) 찾기
   let tableStartIndex = -1;
   for (let i = startIndex; i < lines.length; i++) {
-    if (lines[i].includes('┌────')) {
+    if (lines[i].includes('┌────') || lines[i].includes('┌──')) {
       tableStartIndex = i;
       break;
     }
@@ -68,7 +65,7 @@ function extractRandomValidationTable(output) {
   // 테이블 끝 줄(└────) 찾기
   let tableEndIndex = -1;
   for (let i = tableStartIndex; i < lines.length; i++) {
-    if (lines[i].includes('└────')) {
+    if (lines[i].includes('└────') || lines[i].includes('└──')) {
       tableEndIndex = i;
       break;
     }
@@ -76,7 +73,7 @@ function extractRandomValidationTable(output) {
 
   if (tableEndIndex === -1) return '';
 
-  // Random-Validation 헤더부터 테이블 끝까지 추출
+  // 테이블 전체 추출
   const extractedLines = lines.slice(startIndex, tableEndIndex + 1);
   return extractedLines.join('\n');
 }

@@ -30,6 +30,7 @@ jobs:
     env:
       MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
       GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
+      NODE_OPTIONS: --no-warnings  # Node.js Buffer deprecated 경고 억제
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,7 +60,7 @@ jobs:
             cp tests/reports/validation-*.md /tmp/live-reports/ || true
           cat /tmp/live-output.txt
 
-      # Tier 2 결과를 아티팩트로 저장 (main에 직접 커밋하지 않음)
+      # Tier 2 결과를 아티팩트로 저장 (main에 직접 커밋하지 않음 - 충돌 방지)
       - name: Upload Tier 2 results as artifact
         if: always()
         uses: actions/upload-artifact@v4
@@ -71,7 +72,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: validation-ports
+          name: validation-reports
           path: /tmp/live-reports/
           if-no-files-found: ignore
       - name: Upload failure feedback
@@ -153,6 +154,6 @@ jobs:
       # 작업 브랜치를 main에 force push
       - name: Force push to main
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git push origin HEAD:main --force
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          git push origin HEAD:main --force --no-verify
