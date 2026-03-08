@@ -9,6 +9,9 @@
 # Test feedback (auto-generated)
 tests/feedback/
 
+# Test reports (auto-generated)
+docs/random-validation-table.md
+
 # Node.js
 node_modules/
 

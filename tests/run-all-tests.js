@@ -24,6 +24,7 @@ const path = require('path');
 const LIVE_MODE     = process.argv.includes('--live');
 const FEEDBACK_PATH = path.join(__dirname, 'feedback', 'last-failure.json');
 const MAX_RETRIES   = 3;
+const RANDOM_VALID_TABLE_PATH = path.join(__dirname, '..', 'docs', 'random-validation-table.md');
 
 // ─── 테스트 스위트 목록 ───────────────────────────────────────────────────────
 // live: true → --live 플래그가 있고 API 키가 있을 때만 실행
@@ -133,6 +134,12 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
   const dateStr = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'long' });
   const isoStr = now.toISOString();
 
+  // 랜덤 검증 테이블 로드
+  let randomValidationTable = '';
+  if (fs.existsSync(RANDOM_VALID_TABLE_PATH)) {
+    randomValidationTable = fs.readFileSync(RANDOM_VALID_TABLE_PATH, 'utf8');
+  }
+
   // 개별 테스트 결과
   const testResults = results.map(r => {
     const icon = r.status === 'PASS' ? '✅' : r.status === 'SKIP' ? '⏭️' : '❌';
@@ -149,6 +156,21 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
     `> **결과**: ${failures.length === 0 ? '✅ PASSED' : '❌ FAILED'}`,
     `> **통과**: ${totalPassed}/${totalTests}`,
     '',
+  ].join('\n');
+
+  // 랜덤 검증 테이블이 있으면 추가
+  if (randomValidationTable) {
+    return report + randomValidationTable + '\n\n---\n\n' + [
+      '## 테스트 결과',
+      '',
+      '| 테스트 스위트 | 통과/전체 |',
+      '|---------------|-----------|',
+      testResults,
+      '',
+    ].join('\n');
+  }
+
+  return report + [
     '## 테스트 결과',
     '',
     '| 테스트 스위트 | 통과/전체 |',

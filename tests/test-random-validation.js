@@ -386,6 +386,14 @@ function generateReport(specObjs, pipelineResults, startTime, categoryLog) {
 
   fs.mkdirSync(REPORTS_DIR, { recursive: true });
   fs.writeFileSync(reportPath, md, 'utf8');
+
+  // 랜덤 검증 테이블을 별도 파일에 저장 (test-report.md에서 로드용)
+  const tableMd = md.split('## 매칭 결과')[1] || '';
+  const randomTablePath = path.join(__dirname, '..', 'docs', 'random-validation-table.md');
+  fs.mkdirSync(path.dirname(randomTablePath), { recursive: true });
+  fs.writeFileSync(randomTablePath, tableMd, 'utf8');
+  console.log(`📄 랜덤 검증 테이블 저장: docs/random-validation-table.md`);
+
   return reportPath;
 }
 
