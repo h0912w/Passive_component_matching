@@ -153,30 +153,24 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
   const report = [
     `# 테스트 결과 리포트`,
     '',
-    `> **테스트 일시**: ${dateStr} (${isoStr})`,
-    `> **모드**: ${mode === 'live' ? 'LIVE (실제 API 호출)' : 'MOCK (의의 테스트)'}`,
-    `> **결과**: ${failures.length === 0 ? '✅ PASSED' : '❌ FAILED'}`,
-    `> **통과**: ${totalPassed}/${totalTests}`,
-    '',
   ].join('\n');
 
   // 랜덤 검증 테이블이 있으면 추가
   if (randomValidationTable) {
+    // 최종 출력물 섹션 + 랜덤 검증 결과 + 구분선 + 테스트 결과
     return report + randomValidationTable + '\n\n---\n\n' + [
-      '## 테스트 결과',
+      '## 최종 출력물 (사용자가 실제로 받아보는 결과)',
       '',
-      '| 테스트 스위트 | 통과/전체 |',
-      '|---------------|-----------|',
       testResults,
       '',
     ].join('\n');
   }
 
   return report + [
-    '## 테스트 결과',
+    '## 최종 출력물 (사용자가 실제로 받아보는 결과)',
     '',
-    '| 테스트 스위트 | 통과/전체 |',
-    '|---------------|-----------|',
+    '*(Tier 2 랜덤 검증 결과가 없습니다. `npm run test:live`를 실행하세요.)*',
+    '',
     testResults,
     '',
   ].join('\n');
