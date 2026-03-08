@@ -482,7 +482,23 @@ StockRanker → MPN 선정 → MpnValidator.validateMpn()
 
 ## 테스트 방법
 
+### Tier 2 API 키 설정
+
+Tier 2 라이브 테스트(`npm run test:live`)를 실행하려면 먼저 API 키를 설정해야 합니다.
+
 ```bash
+# 1. .env.example 파일을 복사
+cp .env.example .env
+
+# 2. .env 파일을 열어 실제 API 키로 교체
+#    - MOUSER_API_KEY:  https://www.mouser.com/api-hub/ 에서 발급
+#    - GLM_API_KEY:     https://open.bigmodel.cn 에서 발급
+```
+
+`.env` 파일은 `.gitignore`에 등록되어 있어 Git에 올라가지 않습니다.
+
+```bash
+# 테스트 준비
 # 최초 1회: 의존성 설치
 npm install
 
