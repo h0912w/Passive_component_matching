@@ -85,10 +85,7 @@ function loadTestCases() {
         allSpecs.push({
           input: testCase.input,
           category: category.id,
-          categoryLabel: category.label,
-          expected_resistance: testCase.expected_resistance,
-          expected_package: testCase.expected_package,
-          expected_tolerance: testCase.expected_tolerance
+          categoryLabel: category.label
         });
       }
     }
