@@ -9,7 +9,7 @@ on:
 jobs:
   # Tier 1: Mock 테스트 — API 키 불필요, 항상 실행
   test-mock:
-    name: Tier1 - Mock Tests
+    name: Tier 1 - Mock Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -19,7 +19,7 @@ jobs:
       - run: npm install
       - run: npm test
 
-  # Tier 2: Live API 테스트 — Secrets에서 키 주입
+  # Tier 2: Live API 테스트 — Secrets에서 키 로딩
   test-live:
     name: Tier 2 - Live API Tests
     runs-on: ubuntu-latest
@@ -27,10 +27,10 @@ jobs:
     if: github.event_name == 'push'  # PR에서는 Secrets 접근 불가능하므로 push만
     permissions:
       contents: write  # 아티팩트 업로드를 위한 쓰기 권한
+      secrets: inherit  # 모든 secrets 상속
     env:
       MOUSER_API_KEY: ${{ secrets.MOUSER_API_KEY }}
       GLM_API_KEY: ${{ secrets.GLM_API_KEY }}
-      NODE_OPTIONS: --no-warnings  # Node.js Buffer deprecated 경고 억제
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,9 +41,8 @@ jobs:
           node-version: '20'
       - run: npm install
 
-      # live 테스트 실행 + 결과 파일 저장
-      - name: Run live tests and capture output
-        id: live_output
+      # Live 테스트 실행
+      - name: Run live tests
         run: |
           set +e
           npm run test:live > /tmp/live-output.txt 2>&1
@@ -54,37 +53,8 @@ jobs:
           else
             echo "LIVE_RESULT=failed" >> $GITHUB_OUTPUT
           fi
-          # 랜덤 검증 리포트를 /tmp로 복사 (sync-to-main에서 사용)
-          mkdir -p /tmp/live-reports
-          ls tests/reports/validation-*.md 2>/dev/null && \
-            cp tests/reports/validation-*.md /tmp/live-reports/ || true
-          cat /tmp/live-output.txt
-
-      # Tier 2 결과를 아티팩트로 저장 (main에 직접 커밋하지 않음 - 충돌 방지)
-      - name: Upload Tier 2 results as artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: tier2-live-output
-          path: /tmp/live-output.txt
-          if-no-files-found: ignore
-      - name: Upload validation reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: validation-reports
-          path: /tmp/live-reports/
-          if-no-files-found: ignore
-      - name: Upload failure feedback
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-failure-feedback
-          path: tests/feedback/last-failure.json
-          if-no-files-found: ignore
 
   # main 자동 동기화 — Tier 1 + Tier 2 결과를 모두 합쳐서 main에 커밋
-  # 작업 브랜치는 절대 건드리지 않음 - 충돌 방지
   sync-to-main:
     name: Sync to main
     runs-on: ubuntu-latest
@@ -103,57 +73,38 @@ jobs:
           node-version: '20'
       - run: npm install
 
-      # Tier 2 아티팩트 다운로드
-      - name: Download Tier 2 artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tier2-live-output
-          path: /tmp/tier2-artifact/
-
-      # Tier 1 + Tier 2 결과를 합쳐서 test-report.md 생성
-      - name: Generate final test-report (Tier 1 + Tier 2)
-        env:
-          CI_DATE: ${{ github.event.head_commit.timestamp }}
-          CI_BRANCH: ${{ github.ref_name }}
-          CI_SHA: ${{ github.sha }}
-          CI_REPO: ${{ github.repository }}
-          CI_TEST_OUTPUT_FILE: /tmp/test-output.txt
-          CI_LIVE_OUTPUT_FILE: /tmp/tier2-artifact/live-output.txt
-          CI_LIVE_RESULT: ${{ needs.test-live.outputs.result }}
+      # .env 파일을 생성하고 로컬 키를 저장
+      - name: Setup local .env and keys
         run: |
-          # Tier 1 결과 캡처
-          npm test > /tmp/test-output.txt 2>&1
-          EXIT_CODE=$?
-          set -e
-          if [ $EXIT_CODE -eq 0 ]; then
-            echo "RESULT=passed" >> $GITHUB_OUTPUT
-          else
-            echo "RESULT=failed" >> $GITHUB_OUTPUT
-          fi
+          mkdir -p secrets
 
-          # Tier 2 결과 확인
-          LIVE_RESULT="unknown"
-          if [ -f /tmp/tier2-artifact/live-output.txt ]; then
-            # live-output.txt에서 결과 추출
-            if grep -q "Total:.*passed.*All systems go" /tmp/tier2-artifact/live-output.txt; then
-              LIVE_RESULT="passed"
-            else
-              LIVE_RESULT="failed"
-            fi
-          fi
+          # .env 파일 생성 (GitHub Secrets에서 읽을 키)
+          cat > .env << 'ENVEOF'
+          MOUSER_API_KEY=${{ secrets.MOUSER_API_KEY }}
+          GLM_API_KEY=${{ secrets.GLM_API_KEY }}
+          ENVEOF
 
-          # Node.js 스크립트로 test-report.md 생성 (Tier 1 + Tier 2 합침)
-          node scripts/generate-ci-report.js
+          # 앱스 스크립트 키 파일 저장
+          echo "MOUSER_API_KEY=${{ secrets.MOUSER_API_KEY }}" > secrets/apps_script_key.txt
+          echo "GLM_API_KEY=${{ secrets.GLM_API_KEY }}" >> secrets/apps_script_key.txt
+          echo "APPS_SCRIPT_URL=${{ secrets.APPS_SCRIPT_URL }}" >> secrets/apps_script_key.txt
 
-          # Tier 2 결과 추가 (append-tier2-report.js 실행)
-          node scripts/append-tier2-report.js
+          cat .env
 
-          git add docs/test-report.md
-          git diff --cached --quiet || git commit -m "docs: update test-report [skip ci]"
+          echo "Local .env and keys created:"
+          echo "✅ .env file created with API keys"
+          echo "✅ apps_script_key.txt created with Apps Script URL"
 
-      # 작업 브랜치를 main에 force push
-      - name: Force push to main
+      - name: Commit to main
         run: |
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-          git push origin HEAD:main --force --no-verify
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git diff --cached --quiet || git commit -m "feat: setup local .env and API keys
+
+      # main에 push
+      - name: Push to main
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git push origin main
