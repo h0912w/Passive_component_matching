@@ -27,31 +27,51 @@ const tier1Full = fs.existsSync(testReportPath)
 // H1 헤더 제거 (최종 리포트에서 한 번만 출력)
 const tier1Body = tier1Full.replace(/^# 테스트 결과 리포트\n+/, '');
 
-// ── 랜덤 검증 리포트에서 실제 결과 표 추출 ──────────────────────────────
-let tier2OutputTable = '';
-if (fs.existsSync(liveTmpReports)) {
-  const reports = fs.readdirSync(liveTmpReports)
-    .filter(f => f.startsWith('validation-') && f.endsWith('.md'))
-    .sort()
-    .reverse();  // 최신 파일 우선
-
-  if (reports.length > 0) {
-    const latestContent = fs.readFileSync(
-      path.join(liveTmpReports, reports[0]), 'utf8'
-    );
-    // "## 2. 유저 수신 출력" 섹션만 추출 (다음 ## 이전까지)
-    const match = latestContent.match(/(## 2\. 유저 수신 출력[\s\S]*?)(?=\n## |\n# |$)/);
-    if (match) {
-      tier2OutputTable = match[1].trim();
-    }
-  }
-}
-
-// ── live test 콘솔 출력 (마지막 80줄) ────────────────────────────────────
+// ── live test 콘솔 출력 읽기 ───────────────────────────────────────────────────
 let liveConsoleOutput = 'No live output captured';
 if (fs.existsSync(liveOutputFile)) {
   const raw = fs.readFileSync(liveOutputFile, 'utf8');
-  liveConsoleOutput = raw.split('\n').slice(-80).join('\n');
+  liveConsoleOutput = raw;
+}
+
+// ── Random-Validation 테이블 추출 (live 콘솔 출력에서) ───────────────
+let randomValidationTable = '';
+function extractRandomValidationTable(output) {
+  // Random-Validation 테이블의 시작(`┌────`)과 끝(`└────`) 사이 추출
+  const startPattern = /Random-Validation\]\s+\d+\/\d+\s+✅\s*\n\s*┌──────────────────────/s;
+  const startMatch = output.match(startPattern);
+
+  if (!startMatch) return '';
+
+  const startIndex = startMatch.index;
+  // 테이블 끝 찾기 (└────로 시작하는 줄)
+  const endPattern = /└────[\s\│─]+┴────/g;
+  let endMatch;
+  let endIndex = -1;
+  while ((endMatch = endPattern.exec(output)) !== null) {
+    if (endMatch.index > startIndex) {
+      endIndex = endMatch.index + endMatch[0].length;
+      break;
+    }
+  }
+
+  if (endIndex === -1) return '';
+
+  // 테이블 앞의 Random-Validation 헤더부터 추출
+  const headerMatch = output.substring(0, startIndex).match(/\[Random-Validation\][^\n]*/);
+  const tableContent = output.substring(startIndex, endIndex);
+
+  if (!headerMatch) return '';
+
+  return headerMatch[0] + '\n' + tableContent;
+}
+
+randomValidationTable = extractRandomValidationTable(liveConsoleOutput);
+
+// ── live 콘솔 출력 (마지막 80줄) ────────────────────────────────────────
+let liveConsoleTail = 'No live output captured';
+if (liveConsoleOutput !== 'No live output captured') {
+  liveConsoleTail = liveConsoleOutput.split('\n').slice(-80).join('\n');
 }
 
 // ── 최종 리포트: Tier 2 먼저, Tier 1 뒤 ─────────────────────────────────
@@ -64,14 +84,16 @@ const finalReport = [
   '',
   `**결과**: ${badge}`,
   '',
-  tier2OutputTable
-    ? tier2OutputTable
-    : '> 랜덤 검증 리포트 없음 (API 키 누락 또는 테스트 실패)',
+  '### 랜덤 검증 결과 (실제 Mouser API 매칭)',
+  '',
+  randomValidationTable
+    ? '```\n' + randomValidationTable + '\n```'
+    : '> 랜덤 검증 결과 없음 (테스트 실패)',
   '',
   '### Tier 2 전체 출력 로그 (마지막 80줄)',
   '',
   '```',
-  liveConsoleOutput,
+  liveConsoleTail,
   '```',
   '',
   '---',
@@ -84,3 +106,4 @@ const finalReport = [
 fs.mkdirSync('docs', { recursive: true });
 fs.writeFileSync(testReportPath, finalReport);
 console.log('docs/test-report.md rewritten: Tier2 first, then Tier1');
+console.log('Random-Validation table extracted:', randomValidationTable ? 'Yes' : 'No');
