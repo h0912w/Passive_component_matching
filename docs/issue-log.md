@@ -20,6 +20,7 @@
 | [#007](#007) | 2026-03-07 | test-report.md 상단 표 하드코딩 + Tier 2 결과 미포함 | 🟡 Medium |
 | [#008](#008) | 2026-03-08 | clasp push "Skipping push." — 로컬 .gs 파일이 Apps Script에 반영 안 됨 | 🔴 High |
 | [#009](#009) | 2026-03-08 | Git push 인증 오류 — SSH 환경에서 HTTPS 방식 사용 시 /dev/tty 장치 부재 | 🟡 Medium |
+| [#010](#010) | 2026-03-08 | Tier 2 Live 테스트 실패 — GLM API Rate Limit + 코드 버그 | 🔴 High |
 
 ---
 
@@ -376,6 +377,57 @@ SSH 인증: 성공 (Hi h0912w! You've successfully authenticated...)
 - SSH 환경에서 Git 작업을 할 때는 **SSH 방식 원격 URL**을 사용할 것
 - SSH 키는 한 번 등록하면 별도 인증 없이 push 가능
 - 프로젝트 루트의 `.git/config`에서 `[remote "origin"] url` 확인하여 SSH 방식인지 확인
+
+---
+
+## #010
+
+### Tier 2 Live 테스트 실패 — GLM API Rate Limit + 코드 버그
+
+**날짜**: 2026-03-08
+
+**현상**
+```
+[GLM-Live]          0/2    ❌
+  ↳ FAIL: glm_nlp_parse
+     Input:    null
+     Expected: null
+     Actual:   null
+예상치 못한 오류: specObj.input.trim is not a function
+
+[Random-Validation]    0/?    ❌
+  ↳ FAIL: unknown
+```
+
+**피드백 메시지**:
+```
+HTTP 429: {"error":{"code":"1302","message":"您的账户已达到速率限制，请您控制请求频率"}}
+```
+(번역: "귀하의 계정이 속도 제한에 도달했습니다, 요청 빈도를 제어하십시오")
+
+**원인 1: GLM API Rate Limit (기본 원인)**
+- GLM API 연속 호출 속도가 너무 빨라서 Rate Limit(초당 요청 횟수) 초과
+- GLM-Live 테스트 2개 연속 호출 → Rate Limit → Random-Validation도 실패
+- 여러 GLM 테스트가 연속 실행될 때는 누적 호출 횟수 초과 가능
+
+**원인 2: 코드 버그 `specObj.input.trim is not a function`**
+- `specObj.input`가 문자열이 아닌 다른 타입(객체/undefined/null)으로 넘어오고 있음
+- `test-glm-live.js`의 테스트 스펙 구조 문제 가능성
+
+**조치사항 1 (Rate Limit)**:
+1. `tests/test-glm-live.js`에서 GLM API 호출 사이에 **최소 3~5초 딜레이** 추가
+2. `tests/test-random-validation.js`에서 GLM 카테고리별 배치 호출 사이에 **2초 이상 딜레이** 확보
+3. 여러 GLM 테스트가 연속 실행될 때는 테스트 순서 조정: `Mouser-Live` → `GLM-Live` → `Random-Validation` 사이에 딜레이
+
+**조치사항 2 (코드 버그)**:
+1. `tests/test-glm-live.js`에서 `specObj.input`의 타입을 확인하고 디버깅
+2. `apps-script/GlmClient.gs`의 `_parseWithNlp` 함수에서 응답 파싱 로직 검증
+3. `input`이 문자열이 아닐 경우 예외 처리 추가
+
+**재발 방지 규칙**
+- 외부 API를 연속 호출하는 테스트는 항상 **딜레이를 두고 순차 실행**할 것
+- Rate Limit 관련 오류는 HTTP 429 외에 500으로도 나타날 수 있음 (이슈 #004 참조)
+- 테스트 스펙 객체의 타입을 검증할 것 — `trim()` 같은 문자열 메서드 호출 전 타입 체크 필수
 
 ---
 
