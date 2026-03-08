@@ -1,9 +1,8 @@
 # Passive Component Matching Tool
 
 > **⚠️ 세션 시작 시**:
-> `main` 브랜치가 항상 최신 코드를 포함합니다 (GitHub Actions가 자동 동기화).
-> 시스템이 자동 할당한 세션 브랜치(`claude/...`)에서 작업하면 됩니다.
 > 작업 시작 전: `git fetch origin main && git merge origin/main` 으로 최신 코드를 가져오세요.
+> 시스템이 자동 할당한 세션 브랜치(`claude/...`)에서 작업하면 됩니다.
 
 > **새 채팅에서 이 프로젝트를 이어받는 경우**:
 > `docs/session-context.md` 를 먼저 읽으세요. 지금까지의 결정 사항, 현재 진행 상태, 다음 할 일이 정리되어 있습니다.
@@ -17,10 +16,9 @@
 > 1. **`docs/session-context.md`를 반드시 업데이트한다** — 오늘 나눈 대화 내용(결정사항, 변경사항, 다음 할 일)을 빠짐없이 기록.
 >    - 사소한 결정도 모두 포함. "왜 그렇게 했는지(Why)"를 꼭 명시할 것.
 >    - 세션 이력 테이블에 날짜 + 주요 작업 추가.
-> 2. **작업 브랜치에만 push**하면 된다. main 동기화는 GitHub Actions가 자동으로 처리한다:
+> 2. **작업 브랜치에 push** — 필요하면 나중에 수동으로 PR을 생성하거나 main에 머지하세요:
 >    ```
 >    git push -u origin <작업브랜치>
->    # GitHub Actions: Tier 1 mock 테스트 통과 → main에 자동 force push
 >    ```
 > 3. **session-context.md 업데이트 없이 코드만 커밋하는 것은 금지.**
 
@@ -32,7 +30,7 @@
 
 ## 초기 설정 (사용자가 직접 수행)
 
-> API 키 발급, Apps Script 배포, GitHub Actions 설정 등 **사람이 직접 수행해야 하는**
+> API 키 발급, Apps Script 배포 등 **사람이 직접 수행해야 하는**
 > 모든 초기 설정 절차는 **`docs/user-setup-guide.md`** 를 참고하세요.
 
 ---
@@ -64,9 +62,6 @@
 ```
 Passive_component_matching/
 ├── CLAUDE.md                          # 이 파일
-├── .github/
-│   └── workflows/
-│       └── test.yml                   # GitHub Actions CI (mock + live 자동 테스트)
 ├── .claude/
 │   └── skills/
 │       ├── resistor-parsing.md        # 저항값 파싱 스킬
@@ -119,8 +114,6 @@ Passive_component_matching/
 │   ├── issue-log.md                   # 이슈 로그 (현상/원인/조치) — 코드 수정 전 필독
 │   ├── user-setup-guide.md            # 사용자 직접 수행 항목 (API 키 발급, 배포 등)
 │   └── test-report.md                 # 테스트 결과 종합 리포트 (Tier 1/2)
-├── scripts/
-│   └── generate-ci-report.js          # CI에서 test-report.md 생성 (YAML heredoc 우회)
 ├── .env.example                       # API 키 템플릿 (실제 값 없음, Git 포함)
 ├── .gitignore                         # .env, node_modules 차단
 └── package.json                       # npm test / npm run test:live
@@ -520,7 +513,7 @@ Total: 50/50 passed ✅
 - 최상단 섹션: `## 최종 출력물 (사용자가 실제로 받아보는 결과)`
 - 내용: 6열 테이블 예시 (`입력 원본 / 추출 저항값 / 추출 패키지 / 추출 오차 / 부품명(MPN) / Description`)
 - 목적: 테스트 리포트를 열었을 때 개발자가 "이 도구가 뭘 만드는지"를 즉시 확인 가능하게
-- 자동 생성 시에도 이 섹션은 반드시 포함시킬 것 (GitHub Actions sync-to-main 잡의 test-report 생성 코드 포함)
+- 테스트 실행 후 수동으로 업데이트 필요
 
 ### 코드 작성 규칙 (TestRunner가 테스트할 수 있도록 강제)
 1. **순수 함수 우선**: Apps Script API를 사용하지 않는 로직은 반드시 독립 함수로 분리
