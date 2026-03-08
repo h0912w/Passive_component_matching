@@ -22,6 +22,7 @@
 | [#009](#009) | 2026-03-08 | Git push 인증 오류 — SSH 환경에서 HTTPS 방식 사용 시 /dev/tty 장치 부재 | 🟡 Medium |
 | [#010](#010) | 2026-03-08 | Tier 2 Live 테스트 실패 — GLM API Rate Limit + 코드 버그 | 🔴 High |
 | [#011](#011) | 2026-03-08 | GitHub Actions test-live 잡과 sync-to-main 잡 충돌 — 동시에 main push 시도 | 🔴 High |
+| [#012](#012) | 2026-03-08 | Tier 2 결과가 main에 생성되지 않음 — sync-to-main 잡 실행 조건 문제 | 🔴 High |
 
 ---
 
@@ -463,6 +464,35 @@ error: could not apply 8f4bdc2...
 - 동일 파일을 수정하는 여러 잡이 실행될 때는 **한 잡만 main에 커밋**하도록 설계할 것
 - 아티팩트 업로드/다운로드를 사용하여 잡 간 데이터 전달할 것
 - `needs:` 키워드로 잡 실행 순서를 명확히 지정할 것
+
+---
+
+## #012
+
+### Tier 2 결과가 main에 생성되지 않음 — sync-to-main 잡 실행 조건 문제
+
+**날짜**: 2026-03-08
+
+**현상**
+- Tier 2 테스트는 성공했지만 main에 푸시하지 않음
+- sync-to-main 잡이 실행되지 않아서 Tier 2 결과가 main에 반영 안됨
+
+**원인**
+```yaml
+# 문제 코드
+sync-to-main:
+  if: github.event_name == 'push' && github.ref != 'refs/heads/main'
+```
+- 현재 브랜치가 `main`이므로 `github.ref != 'refs/heads/main'` 조건이 `false`
+- sync-to-main 잡이 조건 불충족으로 **스킵됨**
+
+**조치사항**
+1. sync-to-main 조건에서 `github.ref != 'refs/heads/main'` 제거
+2. `if: github.event_name == 'push'` 조건만 유지 (push 이벤트 때만 실행)
+
+**재발 방지 규칙**
+- 작업 브랜치 상태와 상관없이 항상 실행되어야 하는 잡은 `github.ref != 'refs/heads/main'` 조건을 사용하지 말 것
+- main 브랜치에서의 동기화가 필요한 잡은 조건을 신중히 검토할 것
 
 ---
 
