@@ -26,7 +26,6 @@ const FEEDBACK_PATH = path.join(__dirname, 'feedback', 'last-failure.json');
 const MAX_RETRIES   = 3;
 const RANDOM_VALID_TABLE_PATH = path.join(__dirname, '..', 'docs', 'random-validation-table.md');
 const TEST_REPORT_PATH       = path.join(__dirname, '..', 'docs', 'test-report.md');
-const REPORT_MAX_RETRIES = 2; // 레포트 검증 최대 재시도 횟수
 
 // ─── 테스트 스위트 목록 ───────────────────────────────────────────────
 // live: true → --live 플래그가 있고 API 키가 있을 때만 실행
@@ -52,6 +51,7 @@ const SUITES = [
 
 // ─── 유틸 ─────────────────────────────────────────────────────────────
 function pad(str, len) { return String(str).padEnd(len); }
+function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 
 function runSuite(suite) {
   const filePath = path.join(__dirname, suite.file);
@@ -73,7 +73,7 @@ function runSuite(suite) {
   try {
     const output = execSync(`node "${filePath}"`, {
       encoding: 'utf8',
-      timeout: suite.live ? 600000 : 30000,  // live: 100입력 × 2.2s + GLM배치 ≈ 5분 → 10분으로 여유
+      timeout: suite.live ? 180000 : 30000,  // live: 3분 (20개 × 10초 정도)
       cwd:      path.join(__dirname, '..')
     });
     const lines  = output.trim().split('\n');
@@ -122,12 +122,23 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
   const report = [
     `# 테스트 결과 리포트`,
     '',
+    `> **테스트 일시**: ${dateStr} (${isoStr})`,
+    `> **모드**: ${mode.toUpperCase()}`,
+    `> **결과**: ${totalPassed === totalTests ? '전체 통과 ✅' : `부분 통과 (${totalPassed}/${totalTests})`}`,
+    `> **통과**: ${totalPassed}/${totalTests} (${totalTests > 0 ? ((totalPassed/totalTests)*100).toFixed(1) : 0}%)`,
+    '',
+    `## 테스트 결과`,
+    '',
+    `| 테스트 스위트 | 결과 |`,
+    `|--------------|------|`,
+    testResults,
+    ''
   ].join('\n');
 
   fs.mkdirSync(path.dirname(TEST_REPORT_PATH), { recursive: true });
   fs.writeFileSync(TEST_REPORT_PATH, report, 'utf8');
   console.log(`\n📄 테스트 레포트 생성: docs/test-report.md`);
-  return TEST_REPORT_PATH;
+  return report;  // 레포트 내용 반환 (경로 아님)
 }
 
 // ─── 테스트 레포트 자동 검증 ─────────────────────────────────────────────
@@ -228,9 +239,6 @@ function main() {
 
   const report = generateTestReport(results, totalPassed, totalTests, failures, LIVE_MODE ? 'live' : 'mock');
 
-  fs.mkdirSync(path.dirname(TEST_REPORT_PATH), { recursive: true });
-  fs.writeFileSync(TEST_REPORT_PATH, report, 'utf8');
-  console.log(`\n📄 테스트 레포트 생성: docs/test-report.md`);
   console.log(`\n📋 ${TEST_REPORT_PATH} 확인해주세요.`);
 
   // ─── 테스트 레포트 자동 검증 ─────────────────────────────────────────────
@@ -238,32 +246,12 @@ function main() {
   if (validationResult.valid) {
     console.log(`✅ 테스트 레포트 검증 통과`);
     console.log(`📋 ${TEST_REPORT_PATH} 확인해주세요.`);
-    console.log(`✅ 테스트 레포트 자동 검증 통과`);
     process.exit(0);
   } else {
     console.log(`⚠️  테스트 레포트 검증 실패`);
     console.log(`   문제: ${validationResult.reason}`);
     console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
-    console.log(`\n⚠️ 테스트 레포트 수정 필요 (최대 ${REPORT_MAX_RETRIES}회)`);
-
-    // 검증 실패 시 자동 수정 (최대 REPORT_MAX_RETRIES회)
-    if (validationResult.retryCount < REPORT_MAX_RETRIES) {
-      try {
-        const fixedReport = fixTestReport(report, validationResult);
-        fs.writeFileSync(TEST_REPORT_PATH, fixedReport, 'utf8');
-        console.log(`✅ 테스트 레포트 자동 수정 완료`);
-        console.log(`📋 ${TEST_REPORT_PATH} 확인해주세요.`);
-        process.exit(0);
-      } catch (err) {
-        console.log(`❌ 자동 수정 실패: ${err.message}`);
-        console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
-        process.exit(0);
-      }
-    } else {
-      console.log(`❌ 최대 재시도 횟수(${REPORT_MAX_RETRIES}회) 초과`);
-      console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
-      process.exit(0);
-    }
+    process.exit(1);
   }
 }
 

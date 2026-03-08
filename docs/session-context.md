@@ -15,6 +15,7 @@
 - [x] Random-Validation 추출 로직 개선
 - [x] test-random-validation.js 수정 (BATCH_SIZE 5→1)
 - [x] **GitHub Actions 자동화 제거** — 로컬 테스트 환경으로 단순화
+- [x] **test-cases.json 속성명 및 값 수정 완료** — test-random-validation.js와의 불일치 해결
 
 ---
 
@@ -48,6 +49,50 @@
 
 ### 커밋 기록
 - `ce9b993`: "chore: remove GitHub Actions automation and restore local testing"
+
+---
+
+## test-cases.json 수정 (2026-03-08)
+
+### 문제 현상
+- test-random-validation.js가 test-cases.json에서 테스트 케이스를 로드할 때 속성명 불일치로 인한 로딩 오류
+- 일부 예상값이 잘못되어 테스트 결과 왜곡
+
+### 수정 내용
+
+#### 1. 속성명 불일치 수정 (test-random-validation.js)
+```javascript
+// 수정 전:
+expected_resistance: testCase.resistance,
+expected_package: testCase.package,
+expected_tolerance: testCase.tolerance
+
+// 수정 후:
+expected_resistance: testCase.expected_resistance,
+expected_package: testCase.expected_package,
+expected_tolerance: testCase.expected_tolerance
+```
+
+#### 2. test-cases.json 값 수정
+| 입력 | 수정 전 (오차) | 수정 후 (정확) |
+|------|---------------|---------------|
+| 2.2M | 2040 | 2200000 |
+| 10000000R | 12000 | 10000000 |
+| 100R | 100000 | 100 |
+| 4R7 | 4700 | 4.7 (R는 소수점) |
+| 2R2 | 2200 | 2.2 (R는 소수점) |
+
+### Random-Validation 테스트 결과
+- **결과**: 12/13 (92%)
+- **실패 케이스**: `2R2 0402 0.1%`
+- **실패 원인**: Mouser API에서 해당 스펙의 부품 검색 결과 없음 (정상 동작)
+- **상태**: 코드 버그가 아닌 실제 카탈로그 제약 사항
+
+### 테스트 리포트
+- **Tier 1 (Mock)**: 171/171 ✅ 100%
+- **Tier 2 (Live)**: 18/19 ✅ 95%
+- **Random-Validation**: 12/13 ✅ 92%
+- **전체**: 201/203 ✅ 99%
 
 ---
 
@@ -162,3 +207,13 @@ GitHub Actions 자동화를 완전히 제거하고 로컬 테스트 환경으로
 **이유**: 사용자는 복잡한 CI/CD 자동화 없이 로컬에서 테스트하는 방식을 선호함. Apps Script 동작 테스트는 사용자가 직접 수행하겠다고 명시함.
 
 계속 작업하시겠습니까?
+
+---
+
+## 세션 이력
+
+| 날짜 | 주요 작업 | 상태 |
+|------|----------|------|
+| 2026-03-08 | GitHub Actions 자동화 제거 | 완료 ✅ |
+| 2026-03-08 | test-cases.json 속성명 및 값 수정 | 완료 ✅ |
+| 2026-03-08 | Random-Validation 테스트 분석 및 문서화 | 완료 ✅ |
