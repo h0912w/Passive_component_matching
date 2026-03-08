@@ -19,6 +19,7 @@
 | [#006](#006) | 2026-03-07 | YAML heredoc `>` 특수문자 문법 오류 (test.yml L105) | 🔴 High |
 | [#007](#007) | 2026-03-07 | test-report.md 상단 표 하드코딩 + Tier 2 결과 미포함 | 🟡 Medium |
 | [#008](#008) | 2026-03-08 | clasp push "Skipping push." — 로컬 .gs 파일이 Apps Script에 반영 안 됨 | 🔴 High |
+| [#009](#009) | 2026-03-08 | Git push 인증 오류 — SSH 환경에서 HTTPS 방식 사용 시 /dev/tty 장치 부재 | 🟡 Medium |
 
 ---
 
@@ -310,6 +311,71 @@ clasp push --force
 - 새 Google 계정/환경에서 clasp 최초 사용 시 **Apps Script API 활성화** 선행 필수
 - `clasp push` 성공 후 편집기에 반영이 안 되면 **브라우저 새로고침(F5)** 먼저 시도
 - `Skipping push.` 메시지는 "변경 없음" 또는 "push 대상 파일 없음" 두 가지 모두 의미할 수 있음
+
+---
+
+## #009
+
+### Git push 인증 오류 — SSH 환경에서 HTTPS 방식 사용 시 /dev/tty 장치 부재
+
+**날짜**: 2026-03-08
+
+**현상**
+- `git push origin main` 실행 시 인증 오류 발생
+- 오류 메시지:
+  ```
+  fatal: Unable to persist credentials with the 'wincredman' credential store.
+  bash: line 1: /dev/tty: No such device or address
+  error: failed to execute prompt script (exit code 1)
+  fatal: could not read Username for 'https://github.com': No such file or directory
+  ```
+- 핸드폰에서 SSH로 원격 연결한 환경에서 발생
+
+**원인**
+- 원격 URL이 HTTPS 방식(`https://github.com/...`)으로 설정되어 있음
+- SSH 세션에서는 터미널 장치(`/dev/tty`)가 없어 대화형 인증 불가
+- `wincredman` credential store가 SSH 환경에서 정상 동작하지 않음
+
+**조치사항 (해결책 1: SSH 방식으로 변경 - 권장)**
+
+**완료된 작업**:
+1. 원격 URL을 HTTPS → SSH 방식으로 변경
+2. SSH 키 확인 (`id_ed25519` 존재)
+3. GitHub SSH 인증 테스트 성공
+4. `git push origin main` 완료
+
+**명령어**:
+```bash
+# 1. 원격 URL을 SSH 방식으로 변경
+git remote set-url origin git@github.com:h0912w/Passive_component_matching.git
+
+# 2. SSH 키가 있는지 확인
+cat ~/.ssh/id_ed25519.pub
+
+# 3. SSH 키가 없으면 생성
+ssh-keygen -t ed25519 -C "your_email@example.com"
+
+# 4. GitHub에 SSH 키 등록 (Settings → SSH Keys에 공개키 내용 복사)
+
+# 5. SSH 연결 테스트
+ssh -T git@github.com
+# "Hi h0912w! You've successfully authenticated..." 메시지가 뜨면 성공
+
+# 6. Push
+git push origin main
+```
+
+**완료된 SSH 설정 (2026-03-08)**:
+```
+원격 URL: git@github.com:h0912w/Passive_component_matching.git
+SSH 키: id_ed25519 (기존 존재)
+SSH 인증: 성공 (Hi h0912w! You've successfully authenticated...)
+```
+
+**재발 방지 규칙**
+- SSH 환경에서 Git 작업을 할 때는 **SSH 방식 원격 URL**을 사용할 것
+- SSH 키는 한 번 등록하면 별도 인증 없이 push 가능
+- 프로젝트 루트의 `.git/config`에서 `[remote "origin"] url` 확인하여 SSH 방식인지 확인
 
 ---
 

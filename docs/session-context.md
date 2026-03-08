@@ -206,6 +206,10 @@ Passive_component_matching/
 3. **CORS**: Apps Script 웹앱은 CORS 미지원 → JSONP 또는 iframe 방식
 4. **DI 패턴 필수**: 모든 .gs 파일은 Apps Script API를 파라미터로 주입받아야 Node.js 테스트 가능
 5. **조건부 export 필수**: 각 .gs 파일 하단에 `if (typeof module !== 'undefined' && module.exports)` 블록
+6. **Git SSH 인증 환경**: 핸드폰 SSH 환경에서는 HTTPS 방식으로 push 불가 → SSH 방식 사용 권장
+   - 현재 원격 URL: `git@github.com:h0912w/Passive_component_matching.git` (SSH 방식)
+   - SSH 키: `id_ed25519` (이미 등록됨)
+   - 인증 방식: 비밀번호 없이 SSH 키 기반 자동 인증
 
 ---
 
@@ -269,3 +273,5 @@ node tests/test-glm-live.js        # GLM만 단독 실행
 | 2026-03-08 | **[BACKLOG-001/002 구현 완료]** MPN 정확도 개선 + 역검증 로직 추가. (1) StockRanker.gs — `_extractResistanceFromDesc`(Description에서 저항값 추출), `_applyFilter`에 resistance_ohms 2차 필터 추가, `rankByStockAll`(정렬된 배열 전체 반환)으로 재시도 후보 확보. (2) MpnValidator.gs 신규 에이전트 — `_lookupByMpn`(Mouser SearchByPartNumber API 단건 조회), `_extractSpecsFromDescription`(Description에서 value/pkg/tol 역추출), `_validateMpn`(3항목 비교 후 valid/invalid 반환). (3) Code.gs — maxResults 10→20, `rankByStockAll` 후보 확보 → MPN 역검증 최대 3회 루프 → 3회 모두 실패 시 오류 표시. (4) 테스트: test-stock-ranker.js 15케이스(저항값 필터+extract 테스트 포함), test-mpn-validator.js 신규 20케이스. run-all-tests.js에 MpnValidator 스위트 추가. 전체 154/154 통과. |
 | 2026-03-08 | **[9열 출력 포맷 도입]** 출력 테이블 6열 → 9열로 변경. 이유: 기존 포맷은 MPN이 실제로 스펙에 맞는지 사용자가 확인 불가 → 9열로 투명성 확보. (1) OutputFormatter.gs — `_formatOhmsDisplay`(Ω→표시문자열), `_computeVerdict`(입력 스펙 vs MPN 스펙 비교) 추가. `formatSuccessRow(parsed, part, mpnSpecs)` 3번째 인수 추가 → cols 6-8(MPN 저항값/패키지/오차) + col9(PASS/FAIL/N/A) 포함. formatOutput headers 6→9개. (2) Code.gs — `bestMpnSpecs = validation.actual` 저장 → `formatSuccessRow`에 전달. (3) blogger/resistor-tool.html — 9열 렌더링, verdict 색상(초록=PASS, 빨강=FAIL). (4) test-random-validation.js — `MpnValidator._extractSpecsFromDescription`로 description에서 역추출 → `_computeVerdict`로 PASS/FAIL 판정 → FAIL 시 다음 후보 시도(최대 3회), 9열 콘솔 표 출력, 리포트 단순화. (5) generate-ci-report.js — 9열 표만, raw output 제거. (6) test-output-formatter.js — 32케이스로 확장. 전체 172/172 통과. |
 | 2026-03-08 | **[SEO 최적화 + blog/output.txt 도입]** (1) blog/output.txt 신규 생성 — AI 분석 기반 블로그 SEO 가이드 문서 (제목 추천, 키워드, 본문 구조, FAQ, JSON-LD 스키마 Tips 포함). (2) blogger/resistor-tool.html 전면 개편 — output.txt 가이드 기반으로 SEO 본문 + JSON-LD 구조화 데이터(SoftwareApplication + FAQPage 스키마) 추가. 향후 output.txt 수정 시에만 HTML도 업데이트. Why: Google 검색 노출 및 AI 추천 서비스 등록을 위해 콘텐츠 구조화 필요. |
+| 2026-03-08 | **[블로거 HTML 개선 - GLM 제거 + 요소 재배치]** (1) "GLM" → "AI"로 전면 변경 (중국산 AI 노출 방지). (2) 저항값 입력 버튼(Tool Widget)을 첫 번째 문단 뒤로 이동 (UX 개선). (3) 키워드 태그 행을 맨 위에서 Conclusion 섹션 뒤로 이동 (SEO 스팸 방지). Why: 중국산 AI 노출 시 사용자 거부감 우려, Google 검색콘솔 키워드 스팸 인식 방지. |
+| 2026-03-08 | **[Git SSH 인증 설정 완료]** SSH 환경에서 Git push 인증 오류 해결. (1) 원격 URL을 HTTPS → SSH 방식으로 변경. (2) SSH 키 확인 (id_ed25519 기존 존재). (3) GitHub SSH 인증 테스트 성공. (4) `git push origin main` 완료. Why: 핸드폰 SSH 환경에서는 HTTPS 방식으로 대화형 인증 불가(/dev/tty 장치 부재). SSH 방식은 키 기반 인증으로 별도 비밀번호 입력 불필요. issue-log #009 기록. |
