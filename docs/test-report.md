@@ -2,6 +2,95 @@
 
 ## Tier 2 Live API 테스트 결과 (실제 Mouser API 매칭)
 
+**결과**: ❌ FAILED
+
+### 랜덤 검증 결과 (실제 Mouser API 매칭)
+
+> 랜덤 검증 결과 없음 (테스트 실패)
+
+### Tier 2 전체 출력 로그 (마지막 80줄)
+
+```
+
+> passive-component-matching@1.0.0 test:live
+> node tests/run-all-tests.js --live
+
+
+🧪 Passive Component Matching — TestRunner
+   모드: LIVE  (Mouser:✅  GLM:✅)
+
+  [랜덤 시드: 1772959186904]
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 랜덤 E24 테스트 입력값 (매 실행마다 다름)                          │
+  ├────┬──────────────────────┬────────────────┬────────────────────────┤
+  │ #  │ 입력 문자열          │ 예상 저항값    │ 결과                   │
+  ├────┼──────────────────────┼────────────────┼────────────────────────┤
+  │ 1  │ 2k 1206 5%           │ 2000Ω          │ ✅ PASS                 │
+  │ 2  │ 160k 0201 5%         │ 160000Ω        │ ✅ PASS                 │
+  │ 3  │ 4.7k 1206 1%         │ 4700Ω          │ ✅ PASS                 │
+  │ 4  │ 110k 0201 5%         │ 110000Ω        │ ✅ PASS                 │
+  │ 5  │ 68k 0805 1%          │ 68000Ω         │ ✅ PASS                 │
+  └────┴──────────────────────┴────────────────┴────────────────────────┘
+  [ValueParser]          29/29  ✅
+  [PackageConverter]     17/17  ✅
+  [StockRanker]          15/15  ✅
+  [OutputFormatter]      32/32  ✅
+  [ErrorHandler]         10/10  ✅
+  [Config]               5/5    ✅
+  [CacheManager]         6/6    ✅
+  [MouserClient]         7/7    ✅
+  [GlmClient]            3/3    ✅
+  [NlpParser]            6/6    ✅
+  [PackageListBuilder]   5/5    ✅
+  [MpnValidator]         20/20  ✅
+  [랜덤 시드: 1772959187242]
+  ┌─────────────────────────────────────────────────┐
+  │ 랜덤 통합 테스트 입력 (매 실행마다 다름)       │
+  │  [1] 4.7k 1206 1%                                │
+  │  [2] 1k 0805 1%                                  │
+  │  [3] 10k 0603 5%                                 │
+  └─────────────────────────────────────────────────┘
+TIER1_SAMPLE:[{"input":"4.7k 1206 1%","resistance":"4.7kΩ","package":"1206 (3216)","tolerance":"1%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true},{"input":"1k 0805 1%","resistance":"1kΩ","package":"0805 (2012)","tolerance":"1%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true},{"input":"10k 0603 5%","resistance":"10kΩ","package":"0201 (0603)","tolerance":"5%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true}]
+  [Integration]          17/17  ✅
+  [Mouser-Live]          2/2    ✅
+  [GLM-Live]             1/2    ❌
+    ↳ FAIL: glm_response_structure
+       Input:    null
+       Expected: null
+       Actual:   null
+     ┌──────────────────────┬────────┬────────┬──────┬──────────────────────┬────────┬────────┬──────┬──────┐
+     │ 입력 원본            │입력저항│입력PKG │입력% │ MPN                  │MPN저항 │MPN PKG │MPN % │검증  │
+     ├──────────────────────┼────────┼────────┼──────┼──────────────────────┼────────┼────────┼──────┼──────┤
+     │ 10K 0402 1%          │ 10kΩ   │ 0402 … │ 1%   │ NTCG103JF103FT1      │ 10kΩ   │ 0402   │ 1%   │ PASS │
+     │ 1206/2R2/5%          │ 2.2Ω   │ 1206 … │ 5%   │ CRCW12062R20JNEAHP   │ 2.2Ω   │        │ 5%   │ PASS │
+     │ 1k5_0805_0.1%        │ 1.5kΩ  │ 0805 … │ 0.1% │ RG2012P-152-B-T5     │ 1.5kΩ  │ 0805   │ 0.1% │ PASS │
+     │ 1005 4.7k 5%         │ 4.7kΩ  │ 1005 … │ 5%   │ VR25000001005JA100   │ 10MΩ   │        │ 5%   │ FAIL │
+     │ 2R2/2012/1%          │ 2.2Ω   │ 2012 … │ 1%   │ CRCW02012R20FXED     │ 2.2Ω   │        │ 1%   │ PASS │
+     │ 5%/1k/0805           │ 1kΩ    │ 0805 … │ 5%   │ CR0805-JW-122ELF     │        │        │ 5%   │ PASS │
+     │ 2.2M_0402_1%         │ 2.2MΩ  │ 0402 … │ 1%   │ WR04W2204FTL         │        │ 0402   │ 1%   │ PASS │
+     │ 1206 0.1%/10K        │ 10kΩ   │ 1206 … │ 0.1% │ PTN1206E1002BST1     │ 10kΩ   │        │ 1%   │ FAIL │
+     │ 100R 5% /1005        │ 100Ω   │ 1005 … │ 5%   │ RC0100JR-07100RL     │ 100Ω   │        │ 5%   │ PASS │
+     │ 0201/4R7_1%          │ 4.7Ω   │ 0201 … │ 1%   │ CR0201-F/-4R70GLF    │        │ 0201   │ 1%   │ PASS │
+     └──────────────────────┴────────┴────────┴──────┴──────────────────────┴────────┴────────┴──────┴──────┘
+  [Random-Validation]    12/12  ✅
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 186/188 passed  (1 suite(s) failed)
+
+⚠️  피드백 → /home/runner/work/Passive_component_matching/Passive_component_matching/tests/feedback/last-failure.json
+   Fix: apps-script/GlmClient.gs :: _callGlm
+   Hint: HTTP 500: {"error":{"code":"500","message":"操作失败"}}
+   Retry: 1/3
+
+
+```
+
+---
+
+## Tier 1 Mock Test 결과
+
+## Tier 2 Live API 테스트 결과 (실제 Mouser API 매칭)
+
 **결과**: ✅ PASSED
 
 > 랜덤 검증 리포트 없음 (API 키 누락 또는 테스트 실패)
