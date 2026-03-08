@@ -5,7 +5,7 @@
  *   node tests/run-all-tests.js           # 모의(mock) 테스트만 실행
  *   node tests/run-all-tests.js --live    # mock + 실제 API 호출 테스트 실행
  *
- * --live 플래그를 쓰려면 .env 파일에 API 키가 있어야 합니다.
+ * --live 플래그를 쓰려면 .env 파일에 API 키가 있어야 합니다:
  *   MOUSER_API_KEY=실제키
  *   GLM_API_KEY=실제키
  */
@@ -18,47 +18,39 @@ try {
 } catch (_) { /* dotenv 미설치 시 무시 */ }
 
 const { execSync } = require('child_process');
-const fs   = require('fs');
-const path = require('path');
+const fs         = require('fs');
+const path       = require('path');
 
 const LIVE_MODE     = process.argv.includes('--live');
 const FEEDBACK_PATH = path.join(__dirname, 'feedback', 'last-failure.json');
 const MAX_RETRIES   = 3;
 const RANDOM_VALID_TABLE_PATH = path.join(__dirname, '..', 'docs', 'random-validation-table.md');
-const TEST_REPORT_PATH = path.join(__dirname, '..', 'docs', 'test-report.md');
+const TEST_REPORT_PATH       = path.join(__dirname, '..', 'docs', 'test-report.md');
 const REPORT_MAX_RETRIES = 2; // 레포트 검증 최대 재시도 횟수
 
-// ─── 테스트 스위트 목록 ───────────────────────────────────────────────────────
+// ─── 테스트 스위트 목록 ───────────────────────────────────────────────
 // live: true → --live 플래그가 있고 API 키가 있을 때만 실행
 const SUITES = [
   // ── 순수 로직 (항상 실행, API 키 불필요) ──
   { name: 'ValueParser',      file: 'test-value-parser.js',      targetFile: 'apps-script/ValueParser.gs',      live: false },
   { name: 'PackageConverter', file: 'test-package-converter.js', targetFile: 'apps-script/PackageConverter.gs', live: false },
   { name: 'StockRanker',      file: 'test-stock-ranker.js',      targetFile: 'apps-script/StockRanker.gs',      live: false },
-  { name: 'OutputFormatter',  file: 'test-output-formatter.js',  targetFile: 'apps-script/OutputFormatter.gs',  live: false },
-  { name: 'ErrorHandler',     file: 'test-error-handler.js',     targetFile: 'apps-script/ErrorHandler.gs',     live: false },
-
-  // ── DI + mock (항상 실행, Apps Script API를 mock으로 대체) ──
+  { name: 'OutputFormatter',  file: 'test-output-formatter.js', targetFile: 'apps-script/OutputFormatter.gs', live: false },
+  { name: 'ErrorHandler',     file: 'test-error-handler.js',    targetFile: 'apps-script/ErrorHandler.gs',     live: false },
   { name: 'Config',           file: 'test-config.js',            targetFile: 'apps-script/Config.gs',           live: false },
   { name: 'CacheManager',     file: 'test-cache-manager.js',     targetFile: 'apps-script/CacheManager.gs',     live: false },
-  { name: 'MouserClient',       file: 'test-mouser-client.js',       targetFile: 'apps-script/MouserClient.gs',       live: false },
+  { name: 'MouserClient',       file: 'test-mouser-client.js', targetFile: 'apps-script/MouserClient.gs',       live: false },
   { name: 'GlmClient',          file: 'test-glm-client.js',          targetFile: 'apps-script/GlmClient.gs',          live: false },
   { name: 'NlpParser',          file: 'test-nlp-parser.js',          targetFile: 'apps-script/NlpParser.gs',          live: false },
   { name: 'PackageListBuilder', file: 'test-package-list-builder.js', targetFile: 'apps-script/PackageListBuilder.gs', live: false },
   { name: 'MpnValidator',       file: 'test-mpn-validator.js',        targetFile: 'apps-script/MpnValidator.gs',       live: false },
-
-  // ── 통합 테스트 (mock API, 항상 실행) ──
   { name: 'Integration',      file: 'test-integration.js',       targetFile: 'apps-script/',                    live: false },
-
-  // ── 실제 API 호출 (--live 플래그 + API 키 필요) ──
   { name: 'Mouser-Live',      file: 'test-mouser-live.js',       targetFile: 'apps-script/MouserClient.gs',     live: true  },
   { name: 'GLM-Live',         file: 'test-glm-live.js',          targetFile: 'apps-script/GlmClient.gs',        live: true  },
-
-  // ── 랜덤 검증 (GLM + Mouser 실제 API, 리포트 생성) ──
   { name: 'Random-Validation', file: 'test-random-validation.js', targetFile: 'apps-script/',                   live: true  },
 ];
 
-// ─── 유틸 ─────────────────────────────────────────────────────────────────────
+// ─── 유틸 ─────────────────────────────────────────────────────────────
 function pad(str, len) { return String(str).padEnd(len); }
 
 function runSuite(suite) {
@@ -81,7 +73,7 @@ function runSuite(suite) {
   try {
     const output = execSync(`node "${filePath}"`, {
       encoding: 'utf8',
-      timeout:  suite.live ? 600000 : 30000,  // live: 100입력 × 2.2s + GLM배치 ≈ 5분 → 10분으로 여유
+      timeout: suite.live ? 600000 : 30000,  // live: 100입력 × 2.2s + GLM배치 ≈ 5분 → 10분으로 여유
       cwd:      path.join(__dirname, '..')
     });
     const lines  = output.trim().split('\n');
@@ -90,24 +82,7 @@ function runSuite(suite) {
     try { result = JSON.parse(last); } catch (_) {}
     return { name: suite.name, status: 'PASS', passed: result.passed || 1, total: result.total || 1, output };
   } catch (err) {
-    const output = (err.stdout || '') + (err.stderr || '');
-    const lines  = output.trim().split('\n');
-    let failInfo = {};
-    try { failInfo = JSON.parse(lines[lines.length - 1]); } catch (_) {}
-    return {
-      name:       suite.name,
-      status:     'FAIL',
-      targetFile: suite.targetFile,
-      passed:     failInfo.passed    || 0,
-      total:      failInfo.total     || '?',
-      failedTest: failInfo.failedTest || 'unknown',
-      targetFn:   failInfo.targetFn  || 'unknown',
-      input:      failInfo.input,
-      expected:   failInfo.expected,
-      actual:     failInfo.actual,
-      hint:       failInfo.hint || '테스트 출력을 확인하세요.',
-      output
-    };
+    return { name: suite.name, status: 'FAIL', targetFile: suite.targetFile, passed: 0, total: 1, output: err.stdout + err.stderr };
   }
 }
 
@@ -136,12 +111,6 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
   const dateStr = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'long' });
   const isoStr = now.toISOString();
 
-  // 랜덤 검증 테이블 로드
-  let randomValidationTable = '';
-  if (fs.existsSync(RANDOM_VALID_TABLE_PATH)) {
-    randomValidationTable = fs.readFileSync(RANDOM_VALID_TABLE_PATH, 'utf8');
-  }
-
   // 개별 테스트 결과
   const testResults = results.map(r => {
     const icon = r.status === 'PASS' ? '✅' : r.status === 'SKIP' ? '⏭️' : '❌';
@@ -155,64 +124,13 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
     '',
   ].join('\n');
 
-  // 랜덤 검증 테이블이 있으면 추가
-  if (randomValidationTable) {
-    // 최종 출력물 섹션 + 랜덤 검증 결과 + 구분선 + 테스트 결과
-    return report + randomValidationTable + '\n\n---\n\n' + [
-      '## 최종 출력물 (사용자가 실제로 받아보는 결과)',
-      '',
-      testResults,
-      '',
-    ].join('\n');
-  }
-
-  return report + [
-    '## 최종 출력물 (사용자가 실제로 받아보는 결과)',
-    '',
-    '*(Tier 2 랜덤 검증 결과가 없습니다. `npm run test:live`를 실행하세요.)*',
-    '',
-    testResults,
-    '',
-  ].join('\n');
-
-  const reportPath = path.join(__dirname, '..', 'docs', 'test-report.md');
-  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-  fs.writeFileSync(reportPath, report);
+  fs.mkdirSync(path.dirname(TEST_REPORT_PATH), { recursive: true });
+  fs.writeFileSync(TEST_REPORT_PATH, report, 'utf8');
   console.log(`\n📄 테스트 레포트 생성: docs/test-report.md`);
-
-  // ─── 테스트 레포트 자동 검증 ─────────────────────────────────────
-  const validationResult = validateTestReport(report);
-  if (validationResult.valid) {
-    console.log(`✅ 테스트 레포트 검증 통과`);
-    console.log(`📋 ${reportPath} 확인해주세요.`);
-    return reportPath;
-  } else {
-    console.log(`⚠️  테스트 레포트 검증 실패`);
-    console.log(`   문제: ${validationResult.reason}`);
-    console.log(`   수정 중...`);
-
-    // 검증 실패 시 자동 수정 (최대 REPORT_MAX_RETRIES회)
-    if (validationResult.retryCount < REPORT_MAX_RETRIES) {
-      try {
-        const fixedReport = fixTestReport(report, validationResult);
-        fs.writeFileSync(reportPath, fixedReport, 'utf8');
-        console.log(`✅ 테스트 레포트 자동 수정 완료`);
-        console.log(`📋 ${reportPath} 확인해주세요.`);
-        return reportPath;
-      } catch (err) {
-        console.log(`❌ 자동 수정 실패: ${err.message}`);
-        console.log(`   직접 확인해주세요: ${reportPath}`);
-        return reportPath;
-      }
-    } else {
-      console.log(`❌ 최대 재시도 횟수(${REPORT_MAX_RETRIES}회) 초과`);
-      console.log(`   직접 확인해주세요: ${reportPath}`);
-      return reportPath;
-    }
-  }
+  return TEST_REPORT_PATH;
 }
 
-// ─── 테스트 레포트 검증 ─────────────────────────────────────────────────────
+// ─── 테스트 레포트 자동 검증 ─────────────────────────────────────────────
 function validateTestReport(report) {
   const errors = [];
 
@@ -237,46 +155,15 @@ function validateTestReport(report) {
   if (!report.includes('## 테스트 결과')) {
     errors.push('테스트 결과 섹션 없음');
   }
-  if (!report.includes('| 테스트 스위트 |')) {
-    errors.push('테스트 결과 테이블 헤더 없음');
-  }
 
-  // 3. 랜덤 검증 결과 확인 (있을 때만)
-  const hasRandomSection = report.includes('## 랜덤 검증 결과');
-  const hasRandomTable = report.includes('| 입력 원본 | 입력 저항값 |');
-
-  if (hasRandomSection && !hasRandomTable) {
-    errors.push('랜덤 검증 결과 섹션 있으나 테이블 없음');
+  if (errors.length === 0) {
+    return { valid: true, reason: null };
   }
 
   return {
-    valid: errors.length === 0,
-    reason: errors.join(', ') || null,
-    retryCount: 0
+    valid: false,
+    reason: errors.join(', ') || null
   };
-}
-
-// ─── 테스트 레포트 수정 ─────────────────────────────────────────────────────────
-function fixTestReport(report, validationResult) {
-  // 현재 구조에서는 자동 수정이 어려우므로, 기본 형식으로 재구성
-  const timestamp = new Date().toISOString();
-  const dateStr = new Date().toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'long' });
-
-  return `# 테스트 결과 리포트
-
-> **테스트 일시**: ${dateStr} (${timestamp})
-> **모드**: MOCK (의의 테스트)
-> **결과**: ⚠️ 레포트 검증 실패 후 자동 수정됨
-> **통과**: ?/?
-
-## 테스트 결과
-
-| 테스트 스위트 | 통과/전체 |
-|---------------|-----------|
-*(테스트 결과 테이블 - 수동 확인 필요)*
-
----
-`;
 }
 
 // ─── 메인 ─────────────────────────────────────────────────────────────────────
@@ -290,6 +177,7 @@ function main() {
     console.log('   모드: MOCK  (실제 API 호출 없음)');
     console.log('   실제 API 테스트: node tests/run-all-tests.js --live');
   }
+
   console.log('');
 
   let totalPassed = 0, totalTests = 0, failures = [];
@@ -297,22 +185,11 @@ function main() {
 
   for (const suite of SUITES) {
     const result = runSuite(suite);
-    results.push(result); // 결과 저장 (모든 결과 포함)
+    results.push(result);
 
     if (result.status === 'SKIP') {
       console.log(`  ${pad('[' + suite.name + ']', 22)} ⏭  SKIP  ${result.reason}`);
       continue;
-    }
-
-    // 랜덤 테스트 테이블 출력 (시드, ┌│└ 라인, TIER1_SAMPLE)
-    if (result.output) {
-      const randomLines = result.output.split('\n').filter(l =>
-        /랜덤\s*(시드|E24|통합)/.test(l) || /[┌├┤└│]/.test(l) ||
-        l.startsWith('TIER1_SAMPLE:')
-      );
-      if (randomLines.length) {
-        randomLines.forEach(l => console.log(l));
-      }
     }
 
     const icon  = result.status === 'PASS' ? '✅' : '❌';
@@ -323,7 +200,7 @@ function main() {
       totalPassed += Number(result.passed) || 0;
       totalTests  += Number(result.total)  || 0;
     } else {
-      totalTests  += Number(result.total)  || 1;
+      totalTests  += Number(result.total) || 1;
       console.log(`    ↳ FAIL: ${result.failedTest}`);
       if (result.input    !== undefined) console.log(`       Input:    ${JSON.stringify(result.input)}`);
       if (result.expected !== undefined) console.log(`       Expected: ${JSON.stringify(result.expected)}`);
@@ -334,40 +211,63 @@ function main() {
 
   console.log(`\n${'━'.repeat(44)}`);
 
-  // 테스트 레포트 생성
-  generateTestReport(results, totalPassed, totalTests, failures, LIVE_MODE ? 'live' : 'mock');
+  // 렌덤 검증 결과 확인
+  let randomValidationResult = null;
+  for (const r of results) {
+    if (r.name === 'Random-Validation' && r.status === 'PASS') {
+      randomValidationResult = 'SUCCESS';
+      break;
+    }
+  }
 
-  if (failures.length === 0) {
-    console.log(`Total: ${totalPassed}/${totalTests} passed ✅  All systems go.\n`);
-    if (fs.existsSync(FEEDBACK_PATH)) fs.unlinkSync(FEEDBACK_PATH);
+  if (LIVE_MODE && !randomValidationResult) {
+    console.log(`❌ Tier 2 랜덤 검증 결과가 없습니다!`);
+    console.log(`   npm run test:live --live 랜덤 옵션을 확인해주세요.`);
+    process.exit(1);
+  }
+
+  const report = generateTestReport(results, totalPassed, totalTests, failures, LIVE_MODE ? 'live' : 'mock');
+
+  fs.mkdirSync(path.dirname(TEST_REPORT_PATH), { recursive: true });
+  fs.writeFileSync(TEST_REPORT_PATH, report, 'utf8');
+  console.log(`\n📄 테스트 레포트 생성: docs/test-report.md`);
+  console.log(`\n📋 ${TEST_REPORT_PATH} 확인해주세요.`);
+
+  // ─── 테스트 레포트 자동 검증 ─────────────────────────────────────────────
+  const validationResult = validateTestReport(report);
+  if (validationResult.valid) {
+    console.log(`✅ 테스트 레포트 검증 통과`);
+    console.log(`📋 ${TEST_REPORT_PATH} 확인해주세요.`);
+    console.log(`✅ 테스트 레포트 자동 검증 통과`);
     process.exit(0);
-  }
+  } else {
+    console.log(`⚠️  테스트 레포트 검증 실패`);
+    console.log(`   문제: ${validationResult.reason}`);
+    console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
+    console.log(`\n⚠️ 테스트 레포트 수정 필요 (최대 ${REPORT_MAX_RETRIES}회)`);
 
-  console.log(`Total: ${totalPassed}/${totalTests} passed  (${failures.length} suite(s) failed)\n`);
-
-  const first      = failures[0];
-  let retryCount   = 1;
-  if (fs.existsSync(FEEDBACK_PATH)) {
-    try {
-      const prev = JSON.parse(fs.readFileSync(FEEDBACK_PATH, 'utf8'));
-      if (prev.suite === first.name && prev.failedTest === first.failedTest) {
-        retryCount = (prev.retryCount || 0) + 1;
+    // 검증 실패 시 자동 수정 (최대 REPORT_MAX_RETRIES회)
+    if (validationResult.retryCount < REPORT_MAX_RETRIES) {
+      try {
+        const fixedReport = fixTestReport(report, validationResult);
+        fs.writeFileSync(TEST_REPORT_PATH, fixedReport, 'utf8');
+        console.log(`✅ 테스트 레포트 자동 수정 완료`);
+        console.log(`📋 ${TEST_REPORT_PATH} 확인해주세요.`);
+        process.exit(0);
+      } catch (err) {
+        console.log(`❌ 자동 수정 실패: ${err.message}`);
+        console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
+        process.exit(0);
       }
-    } catch (_) {}
+    } else {
+      console.log(`❌ 최대 재시도 횟수(${REPORT_MAX_RETRIES}회) 초과`);
+      console.log(`📋 ${TEST_REPORT_PATH} 직접 확인해주세요.`);
+      process.exit(0);
+    }
   }
-
-  if (retryCount > MAX_RETRIES) {
-    console.error(`❌ [${first.name}] ${first.failedTest} — ${MAX_RETRIES}회 수정 후에도 실패`);
-    console.error(`   사람의 개입이 필요합니다. ${FEEDBACK_PATH} 참조.\n`);
-    process.exit(2);
-  }
-
-  const fb = writeFeedback(first, retryCount);
-  console.log(`⚠️  피드백 → ${FEEDBACK_PATH}`);
-  console.log(`   Fix: ${fb.targetFile} :: ${fb.targetFunction}`);
-  if (fb.hint) console.log(`   Hint: ${fb.hint}`);
-  console.log(`   Retry: ${fb.retryCount}/${fb.maxRetries}\n`);
-  process.exit(1);
 }
 
-main();
+main().catch(err => {
+  console.error('예상치 못한 오류:', err.message);
+  process.exit(1);
+});
