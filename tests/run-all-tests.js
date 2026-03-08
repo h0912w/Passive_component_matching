@@ -127,6 +127,43 @@ function writeFeedback(result, retryCount) {
   return feedback;
 }
 
+// ─── 테스트 레포트 생성 ──────────────────────────────────────────────────────
+function generateTestReport(results, totalPassed, totalTests, failures, mode) {
+  const now = new Date();
+  const dateStr = now.toLocaleString('ko-KR', { timeZone: 'Asia/Seoul', dateStyle: 'full', timeStyle: 'long' });
+  const isoStr = now.toISOString();
+
+  // 개별 테스트 결과
+  const testResults = results.map(r => {
+    const icon = r.status === 'PASS' ? '✅' : r.status === 'SKIP' ? '⏭️' : '❌';
+    const score = r.total > 0 ? `${r.passed}/${r.total}` : '-';
+    const reason = r.status === 'SKIP' ? `(${r.reason})` : '';
+    return `| [${r.name}] | ${String(score).padEnd(8)} ${icon} ${reason} |`;
+  }).join('\n');
+
+  const report = [
+    `# 테스트 결과 리포트`,
+    '',
+    `> **테스트 일시**: ${dateStr} (${isoStr})`,
+    `> **모드**: ${mode === 'live' ? 'LIVE (실제 API 호출)' : 'MOCK (의의 테스트)'}`,
+    `> **결과**: ${failures.length === 0 ? '✅ PASSED' : '❌ FAILED'}`,
+    `> **통과**: ${totalPassed}/${totalTests}`,
+    '',
+    '## 테스트 결과',
+    '',
+    '| 테스트 스위트 | 통과/전체 |',
+    '|---------------|-----------|',
+    testResults,
+    '',
+  ].join('\n');
+
+  const reportPath = path.join(__dirname, '..', 'docs', 'test-report.md');
+  fs.mkdirSync(path.dirname(reportPath), { recursive: true });
+  fs.writeFileSync(reportPath, report);
+  console.log(`\n📄 테스트 레포트 생성: docs/test-report.md`);
+  return reportPath;
+}
+
 // ─── 메인 ─────────────────────────────────────────────────────────────────────
 function main() {
   console.log('\n🧪 Passive Component Matching — TestRunner');
@@ -141,9 +178,11 @@ function main() {
   console.log('');
 
   let totalPassed = 0, totalTests = 0, failures = [];
+  let results = []; // 결과 저장용
 
   for (const suite of SUITES) {
     const result = runSuite(suite);
+    results.push(result); // 결과 저장 (모든 결과 포함)
 
     if (result.status === 'SKIP') {
       console.log(`  ${pad('[' + suite.name + ']', 22)} ⏭  SKIP  ${result.reason}`);
@@ -179,6 +218,9 @@ function main() {
   }
 
   console.log(`\n${'━'.repeat(44)}`);
+
+  // 테스트 레포트 생성
+  generateTestReport(results, totalPassed, totalTests, failures, LIVE_MODE ? 'live' : 'mock');
 
   if (failures.length === 0) {
     console.log(`Total: ${totalPassed}/${totalTests} passed ✅  All systems go.\n`);
