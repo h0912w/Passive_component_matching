@@ -37,33 +37,48 @@ if (fs.existsSync(liveOutputFile)) {
 // ── Random-Validation 테이블 추출 (live 콘솔 출력에서) ───────────────
 let randomValidationTable = '';
 function extractRandomValidationTable(output) {
-  // Random-Validation 테이블의 시작(`┌────`)과 끝(`└────`) 사이 추출
-  const startPattern = /Random-Validation\]\s+\d+\/\d+\s+✅\s*\n\s*┌──────────────────────/s;
-  const startMatch = output.match(startPattern);
+  // 실제 출력 형식에 맞는 패턴:
+  //   [Random-Validation]    22/22  ✅
+  //    ┌──────────────────────┬────────┬────────┬──────┬──────────────────────┬────────┬────────┬──────┬──────┐
 
-  if (!startMatch) return '';
+  const lines = output.split('\n');
 
-  const startIndex = startMatch.index;
-  // 테이블 끝 찾기 (└────로 시작하는 줄)
-  const endPattern = /└────[\s\│─]+┴────/g;
-  let endMatch;
-  let endIndex = -1;
-  while ((endMatch = endPattern.exec(output)) !== null) {
-    if (endMatch.index > startIndex) {
-      endIndex = endMatch.index + endMatch[0].length;
+  // [Random-Validation] 라인 찾기
+  let startIndex = -1;
+  for (let i = 0; i < lines.length; i++) {
+    if (lines[i].includes('[Random-Validation]')) {
+      startIndex = i;
       break;
     }
   }
 
-  if (endIndex === -1) return '';
+  if (startIndex === -1) return '';
 
-  // 테이블 앞의 Random-Validation 헤더부터 추출
-  const headerMatch = output.substring(0, startIndex).match(/\[Random-Validation\][^\n]*/);
-  const tableContent = output.substring(startIndex, endIndex);
+  // 테이블 시작 줄(┌────) 찾기
+  let tableStartIndex = -1;
+  for (let i = startIndex; i < lines.length; i++) {
+    if (lines[i].includes('┌────')) {
+      tableStartIndex = i;
+      break;
+    }
+  }
 
-  if (!headerMatch) return '';
+  if (tableStartIndex === -1) return '';
 
-  return headerMatch[0] + '\n' + tableContent;
+  // 테이블 끝 줄(└────) 찾기
+  let tableEndIndex = -1;
+  for (let i = tableStartIndex; i < lines.length; i++) {
+    if (lines[i].includes('└────')) {
+      tableEndIndex = i;
+      break;
+    }
+  }
+
+  if (tableEndIndex === -1) return '';
+
+  // Random-Validation 헤더부터 테이블 끝까지 추출
+  const extractedLines = lines.slice(startIndex, tableEndIndex + 1);
+  return extractedLines.join('\n');
 }
 
 randomValidationTable = extractRandomValidationTable(liveConsoleOutput);
@@ -106,4 +121,4 @@ const finalReport = [
 fs.mkdirSync('docs', { recursive: true });
 fs.writeFileSync(testReportPath, finalReport);
 console.log('docs/test-report.md rewritten: Tier2 first, then Tier1');
-console.log('Random-Validation table extracted:', randomValidationTable ? 'Yes' : 'No');
+console.log('Random-Validation table extracted:', randomValidationTable ? 'Yes (' + randomValidationTable.split('\n').length + ' lines)' : 'No');
