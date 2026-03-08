@@ -163,6 +163,7 @@ function _processOneLine(line, fetchSvc, cacheSvc, mouserKey, glmKey) {
 
   // 6) MPN 역검증 — 상위 후보를 최대 3회 순서대로 시도
   var best = null;
+  var bestMpnSpecs = null;
   var maxAttempts = Math.min(3, candidates.length);
   for (var attempt = 0; attempt < maxAttempts; attempt++) {
     var candidate = candidates[attempt];
@@ -174,6 +175,7 @@ function _processOneLine(line, fetchSvc, cacheSvc, mouserKey, glmKey) {
 
     if (validation.valid) {
       best = candidate;
+      bestMpnSpecs = validation.actual;
       break;
     }
   }
@@ -186,7 +188,7 @@ function _processOneLine(line, fetchSvc, cacheSvc, mouserKey, glmKey) {
   // 7) 결과 캐싱
   cachePut(cacheKey, best, 3600, cacheSvc);
 
-  return formatSuccessRow(parsed, best);
+  return formatSuccessRow(parsed, best, bestMpnSpecs);
 }
 
 // Node.js 테스트 환경에서의 모듈 내보내기

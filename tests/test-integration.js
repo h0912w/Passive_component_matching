@@ -169,13 +169,17 @@ result4.rows.forEach((row, i) => {
 
 // CI 리포트용: 실제 테스트된 입력/출력 샘플 데이터 출력 (generate-ci-report.js가 파싱)
 const sampleData = result4.rows.map((row, i) => ({
-  input:       randomInputs[i],
-  resistance:  row.resistance,
-  package:     row.package,
-  tolerance:   row.tolerance,
-  mpn:         row.mpn,
-  description: row.description,
-  success:     row.success
+  input:          randomInputs[i],
+  resistance:     row.resistance,
+  package:        row.package,
+  tolerance:      row.tolerance,
+  mpn:            row.mpn,
+  mpn_resistance: row.mpn_resistance || '',
+  mpn_package:    row.mpn_package    || '',
+  mpn_tolerance:  row.mpn_tolerance  || '',
+  verdict:        row.verdict        || 'N/A',
+  description:    row.description,
+  success:        row.success
 }));
 console.log('TIER1_SAMPLE:' + JSON.stringify(sampleData));
 

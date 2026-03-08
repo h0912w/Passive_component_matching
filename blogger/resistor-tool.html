@@ -218,7 +218,7 @@
       return;
     }
 
-    // 테이블 생성
+    // 테이블 생성 (9열)
     var html = '<table><thead><tr>';
     for (var h = 0; h < headers.length; h++) {
       html += '<th>' + esc(headers[h]) + '</th>';
@@ -230,14 +230,20 @@
       var cls = r.success ? '' : ' class="pcm-error-row"';
       html += '<tr' + cls + '>';
       html += '<td>' + esc(r.original) + '</td>';
-      html += '<td>' + esc(r.resistance) + '</td>';
-      html += '<td>' + esc(r['package']) + '</td>';
-      html += '<td>' + esc(r.tolerance) + '</td>';
       if (r.success) {
-        html += '<td>' + esc(r.mpn) + '</td>';
-        html += '<td>' + esc(r.description) + '</td>';
+        html += '<td>' + esc(r.resistance) + '</td>';
+        html += '<td>' + esc(r['package']) + '</td>';
+        html += '<td>' + esc(r.tolerance) + '</td>';
+        html += '<td><b>' + esc(r.mpn) + '</b></td>';
+        html += '<td>' + esc(r.mpn_resistance) + '</td>';
+        html += '<td>' + esc(r.mpn_package) + '</td>';
+        html += '<td>' + esc(r.mpn_tolerance) + '</td>';
+        var vStyle = r.verdict === 'PASS' ? 'color:#137333;font-weight:bold'
+                   : r.verdict === 'FAIL' ? 'color:#c5221f;font-weight:bold'
+                   : 'color:#666';
+        html += '<td style="' + vStyle + '">' + esc(r.verdict) + '</td>';
       } else {
-        html += '<td colspan="2" style="color:#c5221f">' + esc(r.error || '파싱 실패') + '</td>';
+        html += '<td colspan="8" style="color:#c5221f">' + esc(r.error || '파싱 실패') + '</td>';
       }
       html += '</tr>';
     }

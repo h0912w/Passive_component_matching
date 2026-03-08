@@ -253,6 +253,7 @@ require.extensions['.gs'] = require.extensions['.js'];
 const PackageConverter = require('../apps-script/PackageConverter');
 const ValueParser      = require('../apps-script/ValueParser');
 const StockRanker      = require('../apps-script/StockRanker');
+const MpnValidator     = require('../apps-script/MpnValidator');
 const OutputFormatter  = require('../apps-script/OutputFormatter');
 const ErrorHandler     = require('../apps-script/ErrorHandler');
 
@@ -324,19 +325,43 @@ async function runPipeline(inputLine) {
       stock:        parseInt(rp.AvailabilityInStock || '0', 10)
     }));
 
-    // 5) StockRanker
-    row.bestPart = StockRanker.rankByStock(normalized, {
+    // 5) StockRanker — 후보 전체 확보 (재고 기준 정렬, 2차 스펙 필터)
+    const candidates = StockRanker.rankByStockAll(normalized, {
+      resistance_ohms:  p.resistance_ohms,
       package_imperial: p.package_imperial,
       tolerance_percent: p.tolerance_percent
     });
+
+    // 6) Description에서 역추출한 스펙으로 PASS/FAIL 판정 → FAIL 시 다음 후보 시도 (최대 3회)
+    let bestPart    = null;
+    let bestMpnSpec = null;
+    const maxTry    = Math.min(3, candidates.length);
+    for (let t = 0; t < maxTry; t++) {
+      const cand    = candidates[t];
+      const specs   = MpnValidator._extractSpecsFromDescription(cand.description);
+      const verdict = OutputFormatter._computeVerdict(row.parseResult, specs);
+      if (verdict !== 'FAIL') {
+        bestPart    = cand;
+        bestMpnSpec = specs;
+        break;
+      }
+    }
+    // 3회 모두 FAIL 이면 첫 번째 후보 사용 (verdict=FAIL로 표시)
+    if (!bestPart && candidates.length > 0) {
+      bestPart    = candidates[0];
+      bestMpnSpec = MpnValidator._extractSpecsFromDescription(bestPart.description);
+    }
+
+    row.bestPart    = bestPart;
+    row.bestMpnSpec = bestMpnSpec;
   } catch (e) {
     row.output = OutputFormatter.formatErrorRow(inputLine, 'Mouser 검색 실패: ' + e.message);
     return row;
   }
 
-  // 6) 출력 포맷
+  // 7) 출력 포맷 (9열)
   if (row.bestPart) {
-    row.output = OutputFormatter.formatSuccessRow(row.parseResult, row.bestPart);
+    row.output = OutputFormatter.formatSuccessRow(row.parseResult, row.bestPart, row.bestMpnSpec);
   } else {
     row.output = OutputFormatter.formatErrorRow(inputLine, ErrorHandler.noResultsError(row.keyword));
   }
@@ -378,100 +403,22 @@ function generateReport(specObjs, pipelineResults, startTime, categoryLog) {
   const failRows    = pipelineResults.filter(r => r.output && !r.output.success);
 
   let md = '';
-  md += `# Passive Component Matching — 랜덤 검증 리포트\n\n`;
-  md += `| 항목 | 값 |\n|------|----|\n`;
-  md += `| 실행 시각 | ${endTime.toISOString()} |\n`;
-  md += `| 소요 시간 | ${elapsed}초 |\n`;
-  md += `| 입력 총 개수 | ${specObjs.length} |\n`;
-  md += `| 파이프라인 성공 | ${successRows.length} |\n`;
-  md += `| 파이프라인 실패/미매칭 | ${failRows.length} |\n`;
-  md += `| 성공률 | ${specObjs.length > 0 ? ((successRows.length / specObjs.length) * 100).toFixed(0) : 0}% |\n\n`;
+  md += `# Passive Component Matching — 검증 리포트\n\n`;
+  md += `> 실행 시각: ${endTime.toISOString()} | 소요: ${elapsed}초 | 입력: ${specObjs.length}개 | 성공: ${successRows.length}개 | 실패: ${failRows.length}개\n\n`;
 
-  // ── 카테고리별 GLM 생성 입력값 ──
-  md += `## 1. GLM이 생성한 랜덤 입력값 (카테고리별)\n\n`;
-  md += `> GLM API (glm-4.7-flash, temperature=0.95) 로 ${CATEGORIES.length}가지 사용자 유형을 시뮬레이션\n\n`;
-  for (const cat of (categoryLog || [])) {
-    md += `### ${cat.label}\n\n`;
-    if (cat.error) {
-      md += `> ⚠️ 생성 실패: ${cat.error}\n\n`;
-    } else {
-      md += '```\n';
-      for (const s of (cat.specs || [])) md += s + '\n';
-      md += '```\n\n';
-    }
-  }
-
-  // ── 유저 수신 출력 (6열 테이블) ──
-  md += `## 2. 유저 수신 출력 (실제 프론트엔드 테이블과 동일)\n\n`;
-  md += `| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description |\n`;
-  md += `|-----------|-----------|-----------|---------|-------------|-------------|\n`;
+  // ── 최종 9열 결과 표 (맨 위 배치) ──
+  md += `## 매칭 결과\n\n`;
+  md += `| 입력 원본 | 입력 저항값 | 입력 패키지 | 입력 오차 | 부품명 (MPN) | MPN 저항값 | MPN 패키지 | MPN 오차 | 검증 |\n`;
+  md += `|-----------|-----------|-----------|---------|-------------|----------|----------|--------|------|\n`;
 
   for (const r of pipelineResults) {
-    const o = r.output;
+    const o        = r.output;
     const rawInput = r.rawInput || r.input;
     if (o.success) {
-      md += `| ${esc(rawInput)} | ${esc(o.resistance)} | ${esc(o.package)} | ${esc(o.tolerance)} | ${esc(o.mpn)} | ${esc(o.description)} |\n`;
+      const verdictMd = o.verdict === 'PASS' ? '✅ PASS' : o.verdict === 'FAIL' ? '❌ FAIL' : 'N/A';
+      md += `| ${esc(rawInput)} | ${esc(o.resistance)} | ${esc(o.package)} | ${esc(o.tolerance)} | ${esc(o.mpn)} | ${esc(o.mpn_resistance)} | ${esc(o.mpn_package)} | ${esc(o.mpn_tolerance)} | ${verdictMd} |\n`;
     } else {
-      md += `| ${esc(rawInput)} | - | - | - | **FAIL** | ${esc(o.error)} |\n`;
-    }
-  }
-  md += '\n';
-
-  // ── MPN 복사용 목록 ──
-  if (successRows.length > 0) {
-    md += `## 3. MPN 복사용 목록\n\n`;
-    md += '```\n';
-    for (const r of successRows) {
-      md += r.output.mpn + '\n';
-    }
-    md += '```\n\n';
-  }
-
-  // ── 각 항목 상세 ──
-  md += `## 4. 파이프라인 상세 로그\n\n`;
-  for (let i = 0; i < pipelineResults.length; i++) {
-    const r = pipelineResults[i];
-    md += `### [${i + 1}] \`${r.input}\`\n\n`;
-    md += `| 단계 | 결과 |\n|------|------|\n`;
-
-    if (r.parseResult) {
-      md += `| ValueParser 파싱 | ${r.parseResult.parse_success ? 'SUCCESS' : 'FAIL → NLP 폴백'} |\n`;
-      if (r.parseResult.resistance_ohms != null)  md += `| 저항값 | ${r.parseResult.resistance_ohms} Ω (${r.parseResult.resistance_display || '-'}) |\n`;
-      if (r.parseResult.package_input)             md += `| 패키지 입력 | ${r.parseResult.package_input} |\n`;
-      if (r.parseResult.package_imperial)          md += `| Imperial | ${r.parseResult.package_imperial} |\n`;
-      if (r.parseResult.package_metric)            md += `| Metric | ${r.parseResult.package_metric} |\n`;
-      if (r.parseResult.tolerance_percent != null) md += `| 오차 | ${r.parseResult.tolerance_percent}% |\n`;
-    }
-
-    if (r.keyword)    md += `| Mouser 검색어 | \`${r.keyword}\` |\n`;
-    md += `| Mouser 결과 수 | ${r.mouserHits} |\n`;
-
-    if (r.bestPart) {
-      md += `| 선정 MPN | ${r.bestPart.mpn} |\n`;
-      md += `| 설명 | ${r.bestPart.description} |\n`;
-      md += `| 재고 | ${r.bestPart.stock.toLocaleString()} |\n`;
-    }
-
-    const status = r.output.success ? 'SUCCESS' : 'FAIL';
-    md += `| 최종 결과 | **${status}** |\n\n`;
-  }
-
-  // ── 검증 판정 ──
-  md += `## 5. 검증 판정\n\n`;
-  // edge/sloppy 카테고리의 실패는 예상 가능하므로 PARTIAL이 정상
-  const unexpectedFails = pipelineResults.filter(r =>
-    !r.output.success && r.categoryLabel !== CATEGORIES.find(c => c.id === 'edge')?.label
-                      && r.categoryLabel !== CATEGORIES.find(c => c.id === 'sloppy')?.label
-  );
-  if (failRows.length === 0) {
-    md += `**PASS** — 전체 ${specObjs.length}개 입력이 정상 처리되었습니다.\n`;
-  } else if (unexpectedFails.length === 0) {
-    md += `**PASS (예상 범위)** — ${specObjs.length}개 중 ${successRows.length}개 성공, ${failRows.length}개는 엣지케이스/오염 입력으로 예상된 실패입니다.\n`;
-  } else {
-    md += `**PARTIAL** — ${specObjs.length}개 중 ${successRows.length}개 성공, 예상치 못한 실패 ${unexpectedFails.length}개.\n\n`;
-    md += `예상치 못한 실패 항목:\n`;
-    for (const r of unexpectedFails) {
-      md += `- [${r.categoryLabel}] \`${r.rawInput || r.input}\`: ${r.output.error}\n`;
+      md += `| ${esc(rawInput)} | - | - | - | **FAIL** | - | - | - | ❌ FAIL |\n`;
     }
   }
   md += '\n';
@@ -563,8 +510,8 @@ async function runTests() {
     }
   }
 
-  // ── 3단계: 유저 수신 출력 시뮬레이션 ──
-  console.log(`\n  [3] 유저 수신 출력 (6열 테이블):`);
+  // ── 3단계: 유저 수신 출력 시뮬레이션 (9열) ──
+  console.log(`\n  [3] 유저 수신 출력 (9열 테이블):`);
   // 카테고리별로 묶어서 출력
   const byCategory = {};
   for (const r of pipelineResults) {
@@ -574,19 +521,19 @@ async function runTests() {
   }
   for (const [catLabel, rows] of Object.entries(byCategory)) {
     console.log(`\n     ── ${catLabel} ──`);
-    console.log(`     ┌──────────────────────┬──────────┬──────────────┬──────┬─────────────────────┬──────────────────────────────┐`);
-    console.log(`     │ 입력 원본            │ 저항값   │ 패키지       │ 오차 │ MPN                 │ Description                  │`);
-    console.log(`     ├──────────────────────┼──────────┼──────────────┼──────┼─────────────────────┼──────────────────────────────┤`);
+    console.log(`     ┌──────────────────────┬────────┬────────┬──────┬──────────────────────┬────────┬────────┬──────┬──────┐`);
+    console.log(`     │ 입력 원본            │입력저항│입력PKG │입력% │ MPN                  │MPN저항 │MPN PKG │MPN % │검증  │`);
+    console.log(`     ├──────────────────────┼────────┼────────┼──────┼──────────────────────┼────────┼────────┼──────┼──────┤`);
     for (const r of rows) {
-      const o = r.output;
+      const o      = r.output;
       const rawStr = r.rawInput || r.input;
       if (o.success) {
-        console.log(`     │ ${pad(rawStr,20)} │ ${pad(o.resistance,8)} │ ${pad(o.package,12)} │ ${pad(o.tolerance,4)} │ ${pad(o.mpn,19)} │ ${pad(o.description,28)} │`);
+        console.log(`     │ ${pad(rawStr,20)} │ ${pad(o.resistance,6)} │ ${pad(o.package,6)} │ ${pad(o.tolerance,4)} │ ${pad(o.mpn,20)} │ ${pad(o.mpn_resistance,6)} │ ${pad(o.mpn_package,6)} │ ${pad(o.mpn_tolerance,4)} │ ${pad(o.verdict,4)} │`);
       } else {
-        console.log(`     │ ${pad(rawStr,20)} │ ${pad('-',8)} │ ${pad('-',12)} │ ${pad('-',4)} │ ${pad('FAIL',19)} │ ${pad(o.error||'',28)} │`);
+        console.log(`     │ ${pad(rawStr,20)} │ ${pad('-',6)} │ ${pad('-',6)} │ ${pad('-',4)} │ ${pad('FAIL',20)} │ ${pad('-',6)} │ ${pad('-',6)} │ ${pad('-',4)} │ FAIL │`);
       }
     }
-    console.log(`     └──────────────────────┴──────────┴──────────────┴──────┴─────────────────────┴──────────────────────────────┘`);
+    console.log(`     └──────────────────────┴────────┴────────┴──────┴──────────────────────┴────────┴────────┴──────┴──────┘`);
   }
 
   // ── 4단계: 리포트 저장 ──

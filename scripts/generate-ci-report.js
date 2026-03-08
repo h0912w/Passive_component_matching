@@ -9,7 +9,6 @@
  */
 
 const fs = require('fs');
-const path = require('path');
 
 const date    = process.env.CI_DATE   || new Date().toUTCString();
 const branch  = process.env.CI_BRANCH || 'unknown';
@@ -20,73 +19,45 @@ const outFile = process.env.CI_TEST_OUTPUT_FILE || '/tmp/test-output.txt';
 
 const badge = result === 'passed' ? '✅ PASSED' : '❌ FAILED';
 
-const rawOutput = fs.existsSync(outFile)
-  ? fs.readFileSync(outFile, 'utf8')
-  : '';
+const rawOutput = fs.existsSync(outFile) ? fs.readFileSync(outFile, 'utf8') : '';
 
 // ── TIER1_SAMPLE 파싱 ───────────────────────────────────────────────────────
-// test-integration.js가 출력한 실제 테스트 입력/결과 데이터
 let sampleRows = [];
 const sampleLine = rawOutput.split('\n').find(l => l.startsWith('TIER1_SAMPLE:'));
 if (sampleLine) {
-  try {
-    sampleRows = JSON.parse(sampleLine.slice('TIER1_SAMPLE:'.length));
-  } catch (_) {}
+  try { sampleRows = JSON.parse(sampleLine.slice('TIER1_SAMPLE:'.length)); } catch (_) {}
 }
 
-// ── Tier 1 실제 테스트 결과 표 생성 ───────────────────────────────────────
-function buildTier1Table(rows) {
-  const header = [
-    '| 입력 원본 | 추출 저항값 | 추출 패키지 | 추출 오차 | 부품명 (MPN) | Description |',
-    '|-----------|------------|------------|----------|-------------|-------------|',
+// ── 9열 결과 표 생성 ──────────────────────────────────────────────────────
+function buildResultTable(rows) {
+  const lines = [
+    '| 입력 원본 | 입력 저항값 | 입력 패키지 | 입력 오차 | 부품명 (MPN) | MPN 저항값 | MPN 패키지 | MPN 오차 | 검증 |',
+    '|-----------|-----------|-----------|---------|-------------|----------|----------|--------|------|',
   ];
   if (rows.length === 0) {
-    // 샘플 데이터 없으면 기본 예시 표시
-    return [
-      ...header,
-      '| `1k 1005 5%` | 1kΩ | 0402 (1005) | 5% | RC0402JR-071KL | RES SMD 1K OHM 5% 1/16W 0402 |',
-      '| *(테스트 출력 미캡처 — 다음 실행 시 실제 데이터 표시)* | | | | | |',
-    ].join('\n');
+    lines.push('| *(샘플 데이터 없음 — 다음 실행 시 표시)* | | | | | | | | |');
+    return lines.join('\n');
   }
-  const dataRows = rows.map(r => {
+  for (const r of rows) {
     if (r.success) {
-      return `| \`${r.input}\` | ${r.resistance} | ${r.package} | ${r.tolerance} | ${r.mpn} | ${r.description} |`;
+      const verdict = r.verdict === 'PASS' ? '✅ PASS' : r.verdict === 'FAIL' ? '❌ FAIL' : 'N/A';
+      lines.push(`| \`${r.input}\` | ${r.resistance} | ${r.package} | ${r.tolerance} | ${r.mpn} | ${r.mpn_resistance || ''} | ${r.mpn_package || ''} | ${r.mpn_tolerance || ''} | ${verdict} |`);
     } else {
-      return `| \`${r.input}\` | - | - | - | FAIL | 파싱 실패 |`;
+      lines.push(`| \`${r.input}\` | - | - | - | FAIL | - | - | - | ❌ FAIL |`);
     }
-  });
-  return [...header, ...dataRows].join('\n');
+  }
+  return lines.join('\n');
 }
-
-// ── 전체 출력 마지막 40줄 (요약용) ────────────────────────────────────────
-const testOutput = rawOutput
-  ? rawOutput.split('\n').slice(-40).join('\n')
-  : 'No output captured';
 
 // ── 리포트 조립 ────────────────────────────────────────────────────────────
 const report = [
   '# 테스트 결과 리포트',
   '',
-  '## Tier 1 실제 테스트 결과 (mock API)',
+  `> **${badge}** | ${date} | Branch: \`${branch}\` | Commit: [${sha.slice(0, 8)}](https://github.com/${repo}/commit/${sha})`,
   '',
-  '> 아래 표는 이번 CI 실행에서 **실제로 입력된 랜덤 저항값**에 대한 파이프라인 출력입니다.',
-  '> MPN과 Description은 mock Mouser API 응답 (고정값). 저항값/패키지/오차 추출은 실제 파싱 결과.',
-  '> 실제 Mouser API 결과는 아래 Tier 2 섹션을 확인하세요.',
+  '## 매칭 결과 (Tier 1 Mock)',
   '',
-  buildTier1Table(sampleRows),
-  '',
-  '---',
-  '',
-  `- **Date**: ${date}`,
-  `- **Branch**: ${branch}`,
-  `- **Commit**: [${sha}](https://github.com/${repo}/commit/${sha})`,
-  `- **Result**: ${badge}`,
-  '',
-  '## Tier 1 Mock Test 전체 출력 (마지막 40줄)',
-  '',
-  '```',
-  testOutput,
-  '```',
+  buildResultTable(sampleRows),
 ].join('\n');
 
 fs.mkdirSync('docs', { recursive: true });
