@@ -6,7 +6,7 @@
 
 ## 현재 프로젝트 상태 (2026-03-08 기준)
 
-**단계**: Phase 2~5 완료. 현재는 문제 해결 및 테스트 리포트 개선 중.
+**단계**: Phase 2~5 완료. 현재는 로컬 테스트 환경 단순화 중.
 
 **최근 완료된 작업**:
 - [x] 블로거 HTML 개선 (GLM → AI, 요소 재배치)
@@ -14,6 +14,40 @@
 - [x] SSH 인증 설정 완료
 - [x] Random-Validation 추출 로직 개선
 - [x] test-random-validation.js 수정 (BATCH_SIZE 5→1)
+- [x] **GitHub Actions 자동화 제거** — 로컬 테스트 환경으로 단순화
+
+---
+
+## GitHub Actions 자동화 제거 (2026-03-08)
+
+### 배경
+- Tier1 테스트는 클로드 코드가 수행 (client-side mock 테스트, 로컬 `npm test` 실행)
+- Tier2 테스트는 깃허브 액션이 수행 (실제 API 호출)
+- 사용자는 GitHub Actions 자동화가 불필요하다고 판단하여 삭제 요청
+
+### 삭제된 파일 및 코드
+- `.env` — API 키 플레이스홀더 파일
+- `secrets/api_key_local.txt` — 로컬 API 키 템플릿
+- `secrets/apps_script_key.txt` — Apps Script 키 템플릿
+- `.github/workflows/test.yml` — GitHub Actions 워크플로우
+- `.github/` 폴더 전체 삭제
+
+### 복원된 설정
+- `.gitignore` — 원래 형태로 복원 (.env 등 차단 규칙 활성화)
+
+### 현재 테스트 방법
+1. **Tier1 Mock 테스트**: 로컬에서 `npm test` 실행
+   - 클라이언트 사이드 테스트 (Node.js 환경)
+   - API 키 불필요
+   - 모든 에이전트의 로직 검증 가능
+
+2. **Apps Script 수동 테스트**: 사용자가 직접 수행
+   - Apps Script 에디터에서 실행
+   - 실제 Mouser/GLM API 호출
+   - 테스트 후 결과 확인
+
+### 커밋 기록
+- `ce9b993`: "chore: remove GitHub Actions automation and restore local testing"
 
 ---
 
@@ -50,15 +84,8 @@ fatal: empty ident name (for <runner@...>) not allowed
 - **프론트엔드**: Google Blogger HTML/CSS/JS (블로그 포스팅)
 - **백엔드**: Google Apps Script (doGet/doPost API)
 - **외부 API**: Mouser API v2, GLM API
-- **CI/CD**: GitHub Actions (test-mock + test-live + sync-to-main)
-
-### 3. GitHub Actions 현재 구조
-
-| 잡 | 이름 | 역할 | 트리거 조건 |
-|-----|------|---------|
-| test-mock | Tier 1 Mock 테스트 | 항상 실행 | push 이벤트 |
-| test-live | Tier 2 Live API 테스트 | needs: test-mock, push만 | 아티팩트 저장 |
-| sync-to-main | main 동기화 | needs: [test-mock, test-live], push 이벤트 | test-report.md 생성 + push |
+- **CI/CD**: ❌ GitHub Actions 제거됨 — 로컬 테스트 환경만 사용
+- **테스트**: Tier1 Mock 테스트 (로컬 `npm test` 실행), Apps Script 수동 테스트 (사용자 직접 수행)
 
 ---
 
@@ -121,8 +148,17 @@ npm run test:live
 
 ## 결론
 
-현재까지 파악한 문제들은 코드 수정으로 해결책을 마련했습니다. 하지만 **GitHub Actions가 실제로 실행되어 Tier 2 결과가 main에 생성되는지 확인할 필요가 있습니다.**
+GitHub Actions 자동화를 완전히 제거하고 로컬 테스트 환경으로 단순화했습니다.
 
-왜 깃허브 액션이 제대로 실행되는지는 GitHub Actions 워크플로우 상태를 보는 것입니다. 사용자가 직접 Actions 탭에서 확인하여 다음 문제를 파악하고 해결해야 합니다.
+**현재 테스트 방법**:
+- Tier1: 로컬 `npm test` 실행 (클라이언트 사이드 mock 테스트)
+- Apps Script: 사용자가 직접 에디터에서 수동 테스트
+
+**삭제된 자동화**:
+- GitHub Actions workflow (test-mock, test-live, sync-to-main 잡 모두 삭제)
+- .env 및 secrets/ 폴더 (API 키 관련 파일)
+- .github/ 폴더 전체
+
+**이유**: 사용자는 복잡한 CI/CD 자동화 없이 로컬에서 테스트하는 방식을 선호함. Apps Script 동작 테스트는 사용자가 직접 수행하겠다고 명시함.
 
 계속 작업하시겠습니까?
