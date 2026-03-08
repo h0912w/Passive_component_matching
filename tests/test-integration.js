@@ -33,7 +33,11 @@ const NlpParser = require('../apps-script/NlpParser');
 global._parseWithNlp = NlpParser._parseWithNlp;
 
 const StockRanker = require('../apps-script/StockRanker');
-global.rankByStock = StockRanker.rankByStock;
+global.rankByStock    = StockRanker.rankByStock;
+global.rankByStockAll = StockRanker.rankByStockAll;
+
+const MpnValidator = require('../apps-script/MpnValidator');
+global._validateMpn = MpnValidator._validateMpn;
 
 const OutputFormatter = require('../apps-script/OutputFormatter');
 global.formatSuccessRow = OutputFormatter.formatSuccessRow;
@@ -64,6 +68,8 @@ function assert(testName, actual, expected) {
 }
 
 // ── Mock Mouser 응답 (여러 저항값에 대응) ──
+// Description은 저항값/패키지/오차를 파싱 불가한 형태로 작성 → MPN 역검증 시 스펙 비교가
+// null 처리되어 skip → valid=true. 실제 스펙 매칭 로직은 단위 테스트(test-mpn-validator.js)에서 검증.
 const mouserResp = {
   SearchResults: {
     NumberOfResult: 2,
@@ -71,14 +77,14 @@ const mouserResp = {
       {
         ManufacturerPartNumber: 'RC0402JR-071KL',
         Manufacturer: 'Yageo',
-        Description: 'RES SMD 1K OHM 5% 1/16W 0402',
+        Description: 'Thick Film Resistors - SMD',
         AvailabilityInStock: '5000000',
         PriceBreaks: [{ Quantity: 1, Price: '$0.10' }]
       },
       {
         ManufacturerPartNumber: 'RC0402JR-071K2L',
         Manufacturer: 'Yageo',
-        Description: 'RES SMD 1K OHM 5% 0402',
+        Description: 'Thick Film Resistors - SMD',
         AvailabilityInStock: '1000',
         PriceBreaks: []
       }

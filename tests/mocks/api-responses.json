@@ -51,6 +51,46 @@
       ]
     }
   },
+  "mouser_partnumber_RC0402JR-071KL": {
+    "SearchResults": {
+      "NumberOfResult": 1,
+      "Parts": [
+        {
+          "ManufacturerPartNumber": "RC0402JR-071KL",
+          "MouserPartNumber": "603-RC0402JR-071KL",
+          "Manufacturer": "Yageo",
+          "Description": "Thick Film Resistors - SMD 1/16W 1K OHM 5% 0402",
+          "Availability": "In Stock",
+          "AvailabilityInStock": "5000000",
+          "DataSheetUrl": "",
+          "PriceBreaks": []
+        }
+      ]
+    }
+  },
+  "mouser_partnumber_RC0603FR-0710KL": {
+    "SearchResults": {
+      "NumberOfResult": 1,
+      "Parts": [
+        {
+          "ManufacturerPartNumber": "RC0603FR-0710KL",
+          "MouserPartNumber": "603-RC0603FR-0710KL",
+          "Manufacturer": "Yageo",
+          "Description": "Thick Film Resistors - SMD 1/10W 10K OHM 1% 0603",
+          "Availability": "In Stock",
+          "AvailabilityInStock": "8000000",
+          "DataSheetUrl": "",
+          "PriceBreaks": []
+        }
+      ]
+    }
+  },
+  "mouser_partnumber_WRONG_MPN": {
+    "SearchResults": {
+      "NumberOfResult": 0,
+      "Parts": []
+    }
+  },
   "glm_nlp_1k_0402_5pct": {
     "choices": [
       {

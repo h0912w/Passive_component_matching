@@ -142,25 +142,48 @@ function _processOneLine(line, fetchSvc, cacheSvc, mouserKey, glmKey) {
     return formatSuccessRow(parsed, cached);
   }
 
-  // 4) Mouser 검색
+  // 4) Mouser 검색 (후보를 충분히 확보하기 위해 20개 요청)
   var keyword = buildSearchKeyword(parsed);
-  var searchResult = _searchMouser(keyword, 10, fetchSvc, mouserKey);
+  var searchResult = _searchMouser(keyword, 20, fetchSvc, mouserKey);
 
   if (searchResult.parts.length === 0) {
     return formatErrorRow(line, noResultsError(keyword));
   }
 
-  // 5) StockRanker로 최적 부품 선정
-  var best = rankByStock(searchResult.parts, {
+  // 5) StockRanker로 재고 기준 정렬된 후보 전체 확보 (2차 스펙 필터 포함)
+  var candidates = rankByStockAll(searchResult.parts, {
+    resistance_ohms: parsed.resistance_ohms,
     package_imperial: parsed.package_imperial,
     tolerance_percent: parsed.tolerance_percent
   });
 
-  if (!best) {
+  if (candidates.length === 0) {
     return formatErrorRow(line, noResultsError(keyword));
   }
 
-  // 6) 결과 캐싱
+  // 6) MPN 역검증 — 상위 후보를 최대 3회 순서대로 시도
+  var best = null;
+  var maxAttempts = Math.min(3, candidates.length);
+  for (var attempt = 0; attempt < maxAttempts; attempt++) {
+    var candidate = candidates[attempt];
+    var validation = _validateMpn(candidate.mpn, {
+      resistance_ohms: parsed.resistance_ohms,
+      package_imperial: parsed.package_imperial,
+      tolerance_percent: parsed.tolerance_percent
+    }, fetchSvc, mouserKey);
+
+    if (validation.valid) {
+      best = candidate;
+      break;
+    }
+  }
+
+  // 3회 모두 검증 실패 → 오류 표시
+  if (!best) {
+    return formatErrorRow(line, '스펙 검증 실패: 매칭 부품을 확인할 수 없습니다 (' + keyword + ')');
+  }
+
+  // 7) 결과 캐싱
   cachePut(cacheKey, best, 3600, cacheSvc);
 
   return formatSuccessRow(parsed, best);

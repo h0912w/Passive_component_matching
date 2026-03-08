@@ -42,6 +42,7 @@ const SUITES = [
   { name: 'GlmClient',          file: 'test-glm-client.js',          targetFile: 'apps-script/GlmClient.gs',          live: false },
   { name: 'NlpParser',          file: 'test-nlp-parser.js',          targetFile: 'apps-script/NlpParser.gs',          live: false },
   { name: 'PackageListBuilder', file: 'test-package-list-builder.js', targetFile: 'apps-script/PackageListBuilder.gs', live: false },
+  { name: 'MpnValidator',       file: 'test-mpn-validator.js',        targetFile: 'apps-script/MpnValidator.gs',       live: false },
 
   // ── 통합 테스트 (mock API, 항상 실행) ──
   { name: 'Integration',      file: 'test-integration.js',       targetFile: 'apps-script/',                    live: false },
