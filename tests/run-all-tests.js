@@ -150,12 +150,6 @@ function generateTestReport(results, totalPassed, totalTests, failures, mode) {
     '',
     finalOutputSection,
     '---',
-    '',
-    '## 테스트 결과',
-    '',
-    '| 테스트 스위트 | 결과 |',
-    '|--------------|------|',
-    testResults,
     ''
   ].join('\n');
 
@@ -186,9 +180,9 @@ function validateTestReport(report) {
     errors.push('통과 메타데이터 없음');
   }
 
-  // 2. 테스트 결과 테이블 확인
-  if (!report.includes('## 테스트 결과')) {
-    errors.push('테스트 결과 섹션 없음');
+  // 2. 최종 출력물 섹션 확인
+  if (!report.includes('## 최종 출력물 (사용자가 실제로 받아보는 결과)')) {
+    errors.push('최종 출력물 섹션 없음');
   }
 
   if (errors.length === 0) {
