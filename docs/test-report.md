@@ -105,6 +105,81 @@ Total: 198/198 passed ✅  All systems go.
 🧪 Passive Component Matching — TestRunner
    모드: LIVE  (Mouser:✅  GLM:✅)
 
+  [랜덤 시드: 1772958538644]
+  ┌─────────────────────────────────────────────────────────────────────┐
+  │ 랜덤 E24 테스트 입력값 (매 실행마다 다름)                          │
+  ├────┬──────────────────────┬────────────────┬────────────────────────┤
+  │ #  │ 입력 문자열          │ 예상 저항값    │ 결과                   │
+  ├────┼──────────────────────┼────────────────┼────────────────────────┤
+  │ 1  │ 120k 0201 1%         │ 120000Ω        │ ✅ PASS                 │
+  │ 2  │ 620k 0201 1%         │ 620000Ω        │ ✅ PASS                 │
+  │ 3  │ 100k 1206 5%         │ 100000Ω        │ ✅ PASS                 │
+  │ 4  │ 10k 1206 5%          │ 10000Ω         │ ✅ PASS                 │
+  │ 5  │ 120k 0603 5%         │ 120000Ω        │ ✅ PASS                 │
+  └────┴──────────────────────┴────────────────┴────────────────────────┘
+  [ValueParser]          29/29  ✅
+  [PackageConverter]     17/17  ✅
+  [StockRanker]          15/15  ✅
+  [OutputFormatter]      32/32  ✅
+  [ErrorHandler]         10/10  ✅
+  [Config]               5/5    ✅
+  [CacheManager]         6/6    ✅
+  [MouserClient]         7/7    ✅
+  [GlmClient]            3/3    ✅
+  [NlpParser]            6/6    ✅
+  [PackageListBuilder]   5/5    ✅
+  [MpnValidator]         20/20  ✅
+  [랜덤 시드: 1772958539019]
+  ┌─────────────────────────────────────────────────┐
+  │ 랜덤 통합 테스트 입력 (매 실행마다 다름)       │
+  │  [1] 2.2k 0805 5%                                │
+  │  [2] 1.5k 1206 5%                                │
+  │  [3] 4.7k 1206 5%                                │
+  └─────────────────────────────────────────────────┘
+TIER1_SAMPLE:[{"input":"2.2k 0805 5%","resistance":"2.2kΩ","package":"0805 (2012)","tolerance":"5%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true},{"input":"1.5k 1206 5%","resistance":"1.5kΩ","package":"1206 (3216)","tolerance":"5%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true},{"input":"4.7k 1206 5%","resistance":"4.7kΩ","package":"1206 (3216)","tolerance":"5%","mpn":"RC0402JR-071KL","mpn_resistance":"","mpn_package":"","mpn_tolerance":"","verdict":"N/A","description":"Thick Film Resistors - SMD","success":true}]
+  [Integration]          17/17  ✅
+  [Mouser-Live]          2/2    ✅
+  [GLM-Live]             0/2    ❌
+    ↳ FAIL: glm_nlp_parse
+       Input:    null
+       Expected: null
+       Actual:   null
+예상치 못한 오류: specObj.input.trim is not a function
+  [Random-Validation]    0/?    ❌
+    ↳ FAIL: unknown
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Total: 174/177 passed  (2 suite(s) failed)
+
+⚠️  피드백 → /home/runner/work/Passive_component_matching/Passive_component_matching/tests/feedback/last-failure.json
+   Fix: apps-script/GlmClient.gs :: _parseWithNlp
+   Hint: HTTP 429: {"error":{"code":"1302","message":"您的账户已达到速率限制，请您控制请求频率"}}
+   Retry: 1/3
+
+
+```
+
+---
+
+## Tier 1 Mock Test 결과
+
+## Tier 2 Live API 테스트 결과 (실제 Mouser API 매칭)
+
+**결과**: ❌ FAILED
+
+> 랜덤 검증 리포트 없음 (API 키 누락 또는 테스트 실패)
+
+### Tier 2 전체 출력 로그 (마지막 80줄)
+
+```
+
+> passive-component-matching@1.0.0 test:live
+> node tests/run-all-tests.js --live
+
+
+🧪 Passive Component Matching — TestRunner
+   모드: LIVE  (Mouser:✅  GLM:✅)
+
   [랜덤 시드: 1772955502796]
   ┌─────────────────────────────────────────────────────────────────────┐
   │ 랜덤 E24 테스트 입력값 (매 실행마다 다름)                          │
