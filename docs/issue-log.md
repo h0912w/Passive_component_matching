@@ -257,45 +257,58 @@ on:
 
 ## #008
 
-### clasp push "Skipping push." — 로컬 .gs 파일이 Apps Script에 반영 안 됨
+### clasp push "Skipping push." + Apps Script API 미활성화 + 편집기 캐시 — 로컬 .gs 파일이 Apps Script에 반영 안 됨
 
 **날짜**: 2026-03-08
 
-**현상**
-- `clasp clone <script-id>` 실행 시 `appsscript.json`과 `Code.js` 2개 파일만 내려받힘
-- 곧바로 `clasp push` 실행 시 **"Skipping push."** 출력 후 아무것도 업로드되지 않음
-- 로컬 `apps-script/` 폴더의 12개 `.gs` 파일(`ValueParser.gs`, `NlpParser.gs` 등)이 Apps Script에 전혀 반영되지 않음
+**현상 (발생 순서)**
+1. `clasp clone <script-id>` 실행 → `appsscript.json`과 `Code.js` **2개 파일만** 내려받힘
+2. `clasp push` 실행 → **"Skipping push."** 출력, 아무것도 업로드되지 않음
+3. `.clasp.json`의 `rootDir`을 `"apps-script"`로 수정 후 `clasp push --force` 실행 → **"User has not enabled the Apps Script API"** 오류
+4. Apps Script API 활성화 후 `clasp push --force` 성공 → 그러나 Apps Script **편집기에는 파일이 여전히 안 보임**
+5. 브라우저 새로고침(F5) 후 12개 파일 정상 표시 → **최종 해결**
 
 **원인**
 1. **`clasp clone`의 동작 방식**: Apps Script 프로젝트에 현재 저장된 파일만 내려받는다.
-   해당 프로젝트에는 `appsscript.json`과 `Code.js` 2개만 있었으므로 2개만 클론됨.
-2. **"Skipping push." 원인**: 방금 클론한 파일들이 Apps Script 원격과 이미 동일한 상태 → 변경사항 없음으로 판단하여 스킵.
-3. **rootDir 미설정**: 로컬의 `.gs` 파일들은 `apps-script/` 하위 폴더에 있는데, `clasp clone`이 프로젝트 루트에서 실행되어 `.clasp.json`의 `rootDir`이 루트(`./`)로 설정됨.
-   → clasp가 `apps-script/*.gs` 파일을 push 대상으로 인식하지 못함.
+   원격 프로젝트에 `appsscript.json`과 `Code.js` 2개만 있었으므로 2개만 클론됨.
+2. **"Skipping push." 원인**: 방금 클론한 파일 = 원격과 동일 상태 → 변경사항 없음으로 판단하여 스킵.
+   + `.clasp.json`의 `rootDir`이 `""`(루트)로 설정되어 `apps-script/*.gs` 파일을 push 대상으로 인식 못 함.
+3. **Apps Script API 미활성화**: Google 계정에서 Apps Script API가 기본적으로 비활성화되어 있음.
+   `clasp`가 API를 통해 파일을 업로드하려면 이 설정을 수동으로 켜야 함.
+4. **편집기 캐시**: push 성공 후에도 브라우저가 이전 상태를 캐시하고 있어 새 파일이 즉시 표시되지 않음.
 
-**조치사항**
+**조치사항 (순서대로)**
 
-방법 A — `.clasp.json` 수동 생성 (권장):
+**Step 1** — 로컬을 GitHub 최신 버전으로 동기화:
 ```bash
-# 프로젝트 루트에 .clasp.json 생성
+git pull origin main
+```
+
+**Step 2** — 프로젝트 루트의 `.clasp.json`에 `rootDir` 설정:
+```json
 {
   "scriptId": "<script-id>",
   "rootDir": "apps-script"
 }
 ```
-이후 `clasp push` 실행 → `apps-script/*.gs` 전체 업로드됨.
 
-방법 B — `apps-script/` 내에서 clasp 작업:
+**Step 3** — Apps Script API 활성화 (최초 1회):
+- 브라우저에서 `https://script.google.com/home/usersettings` 접속
+- **"Google Apps Script API"** → **켜기(ON)**
+
+**Step 4** — 강제 push:
 ```bash
-cd apps-script
-clasp clone <script-id>   # 이 폴더 안에서 실행
-clasp push
+clasp push --force
 ```
 
+**Step 5** — Apps Script 편집기 브라우저 새로고침 (F5):
+- 12개 `.gs` 파일이 파일 목록에 표시되면 성공
+
 **재발 방지 규칙**
-- `clasp clone`은 **항상 `.gs` 파일이 있는 폴더(또는 rootDir이 가리킬 폴더)에서** 실행할 것
-- 프로젝트 루트에서 clasp를 사용할 때는 `.clasp.json`에 `"rootDir": "apps-script"` 반드시 명시
-- `clasp push` 후 Apps Script 에디터에서 파일 목록이 늘었는지 확인하는 습관 들이기
+- `clasp clone`은 **항상 rootDir이 가리킬 폴더 기준으로** 실행할 것
+- 프로젝트 루트에서 clasp 사용 시 `.clasp.json`에 `"rootDir": "apps-script"` 반드시 명시
+- 새 Google 계정/환경에서 clasp 최초 사용 시 **Apps Script API 활성화** 선행 필수
+- `clasp push` 성공 후 편집기에 반영이 안 되면 **브라우저 새로고침(F5)** 먼저 시도
 - `Skipping push.` 메시지는 "변경 없음" 또는 "push 대상 파일 없음" 두 가지 모두 의미할 수 있음
 
 ---
