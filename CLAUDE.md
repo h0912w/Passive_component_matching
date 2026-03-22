@@ -346,6 +346,9 @@ RECEIVED → NORMALIZED → RULE_PARSED → PARSE_ASSESSED
 - 패키지는 양쪽 alias를 **OR 조건**으로 검색
 - 후보 정렬: 재고 수량 내림차순 → lifecycle `Active` 우선 → tie-break
 - 역검증: 정규화된 값 기준 비교, 불일치 시 다음 후보 재시도
+- **sub-kΩ 검색 키워드**: `"X ohm"` 형식으로 단위 명시 필수 — 단위 없이 `"X"`만 보내면 kΩ급 부품이 상위에 노출됨 (FC-004)
+- **저항값 필터 윈도우**: 사용자 지정 오차가 있으면 `min(user_tol%, 5%)` 를 저항값 허용 범위로 적용 — 고정 ±5% 필터는 사용자 정밀도 요구를 무시함 (FC-005)
+- **Description 파싱 우선순위**: IEC RKM 3파트 → Kohms/Mohms 형식 → ohms 형식 → K/M/R 단독 — `ProductAttributes`에는 저항 스펙 없음, Description만 사용 (FC-003)
 
 ---
 
