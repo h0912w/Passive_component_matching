@@ -38,6 +38,7 @@ export default {
       });
     }
 
+
     return new Response('Not Found', { status: 404 });
   },
 };
@@ -273,3 +274,4 @@ function jsonResponse(body: unknown, status: number): Response {
     headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
   });
 }
+
