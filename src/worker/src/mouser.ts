@@ -93,30 +93,26 @@ function formatResistanceForSearch(ohm: number): string {
 }
 
 // ── Mouser API 응답 정규화 ───────────────────────────────
+// ⚠️ ProductAttributes는 포장 방식(Reel/Cut Tape)만 포함하며 저항 스펙은 Description에서 추출한다.
+// 참조: /docs/mouser_db_guide.md §2
 
 function normalizePart(raw: MouserApiPart): MouserPart | null {
   if (!raw.MouserPartNumber) return null;
 
-  const attrs = raw.ProductAttributes ?? [];
-  const getAttr = (name: string) =>
-    attrs.find(a => a.AttributeName.toLowerCase().includes(name.toLowerCase()))?.AttributeValue;
-
-  const resistanceText = getAttr('resistance') ?? getAttr('ohm');
-  const packageText    = getAttr('package') ?? getAttr('case');
-  const toleranceText  = getAttr('tolerance');
-  const powerText      = getAttr('power');
+  const desc  = raw.Description ?? '';
+  const mpn   = raw.ManufacturerPartNumber ?? '';
 
   return {
     mouser_part_number: raw.MouserPartNumber,
     manufacturer: raw.Manufacturer ?? '',
-    manufacturer_part_number: raw.ManufacturerPartNumber ?? '',
-    description: raw.Description ?? '',
+    manufacturer_part_number: mpn,
+    description: desc,
     availability: parseAvailability(raw.Availability),
     lifecycle: raw.LifecycleStatus ?? 'Active',
-    resistance_ohm: parseResistanceAttr(resistanceText),
-    package: packageText ?? null,
-    tolerance_percent: parseToleranceAttr(toleranceText),
-    power_watt: parsePowerAttr(powerText),
+    resistance_ohm: parseResistanceFromDesc(desc),
+    package: parsePackageFromDesc(desc, mpn),
+    tolerance_percent: parseToleranceFromDesc(desc),
+    power_watt: parsePowerFromDesc(desc),
     datasheet_url: raw.DataSheetUrl ?? '',
     mouser_url: raw.ProductDetailUrl ?? '',
   };
@@ -128,32 +124,47 @@ function parseAvailability(s?: string): number {
   return isNaN(n) ? 0 : n;
 }
 
-function parseResistanceAttr(s?: string): number | null {
-  if (!s) return null;
-  const m = s.match(/([\d.]+)\s*(k|K|M|Ω|ohm)?/i);
-  if (!m) return null;
-  const val = parseFloat(m[1]);
-  const unit = m[2]?.toLowerCase() ?? '';
-  if (unit === 'k') return val * 1000;
-  if (unit === 'm') return val * 1_000_000;
-  return val;
+// ── Description 필드 파서 (ProductAttributes 대체) ─────────────────────────
+// 참조: /docs/mouser_db_guide.md §3.2
+
+function parseResistanceFromDesc(desc: string): number | null {
+  // 1순위: IEC RKM 3파트 (4R7, 2K2, 1M5)
+  const iec3 = desc.match(/\b(\d+)([RKM])(\d+)\b/i);
+  if (iec3) {
+    const val = parseFloat(`${iec3[1]}.${iec3[3]}`);
+    const u = iec3[2].toUpperCase();
+    return val * (u === 'K' ? 1000 : u === 'M' ? 1e6 : 1);
+  }
+  // 2순위: 숫자 + ohms
+  const ohm = desc.match(/\b(\d+\.?\d*)\s*ohms?\b/i);
+  if (ohm) return parseFloat(ohm[1]);
+  // 3순위: 숫자 + K/M/R 단독
+  const km = desc.match(/\b(\d+\.?\d*)\s*(K|M|R)\b/);
+  if (km) {
+    const val = parseFloat(km[1]);
+    const u = km[2].toUpperCase();
+    return val * (u === 'K' ? 1000 : u === 'M' ? 1e6 : 1);
+  }
+  return null;
 }
 
-function parseToleranceAttr(s?: string): number | null {
-  if (!s) return null;
-  const m = s.match(/([\d.]+)\s*%/);
+function parsePackageFromDesc(desc: string, mpn: string): string | null {
+  const m = (desc + ' ' + mpn).match(/\b(0402|0603|0805|1206|1210|2010|2512|01005|0201|1608|2012|3216|3225|5025|6332)\b/);
+  return m ? m[1] : null;
+}
+
+function parseToleranceFromDesc(desc: string): number | null {
+  const m = desc.match(/[±]?\s*(\d+\.?\d*)\s*%/);
   return m ? parseFloat(m[1]) : null;
 }
 
-function parsePowerAttr(s?: string): number | null {
-  if (!s) return null;
-  const fracM = s.match(/(\d+)\/(\d+)\s*W/i);
-  if (fracM) return parseInt(fracM[1]) / parseInt(fracM[2]);
-  const decM = s.match(/([\d.]+)\s*(m)?W/i);
-  if (decM) {
-    const v = parseFloat(decM[1]);
-    return decM[2] ? v / 1000 : v;
-  }
+function parsePowerFromDesc(desc: string): number | null {
+  const frac = desc.match(/\b(\d+)\/(\d+)\s*W\b/i);
+  if (frac) return parseInt(frac[1]) / parseInt(frac[2]);
+  const mw = desc.match(/\b(\d+\.?\d*)\s*mW\b/i);
+  if (mw) return parseFloat(mw[1]) / 1000;
+  const w = desc.match(/\b(\d+\.?\d*)\s*W\b/i);
+  if (w) return parseFloat(w[1]);
   return null;
 }
 

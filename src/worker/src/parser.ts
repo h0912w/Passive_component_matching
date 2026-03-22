@@ -219,7 +219,9 @@ function parsePackage(token: string): PackageField | null {
 
 function parseTolerance(token: string): ToleranceField | null {
   // % 표기: 1%, ±1%, +/-1%, ±0.5%
-  const percentMatch = token.match(/^[±+\-]?\/?-?(\d+\.?\d*)%$/);
+  // ±(U+00B1) 포함 처리: 정규화 후 파싱
+  const normalized = token.replace(/\u00B1/g, '+').replace(/\+\/-/g, '+');
+  const percentMatch = normalized.match(/^[+\-]?\/?-?(\d+\.?\d*)%$/);
   if (percentMatch) {
     return { percent: parseFloat(percentMatch[1]), text: token, confidence: 0.99 };
   }
