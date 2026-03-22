@@ -10,6 +10,3 @@ WORKER_ENV = "production"
 # GLM_API_KEY     - GLM API key for z.ai
 # MOUSER_API_KEY  - Mouser API key
 
-[[routes]]
-pattern = "your-worker-domain.workers.dev/*"
-zone_name = "workers.dev"
