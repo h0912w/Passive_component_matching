@@ -86,8 +86,8 @@ export function verifyPart(
 
   // 저항값 일치 확인 (필수, ±5% 허용)
   // - part.resistance_ohm이 파싱된 경우: 값 비교 후 불일치 시 VERIFICATION_FAILED
-  // - part.resistance_ohm === null (Description 파싱 실패): 검증 불가 → provisional PASS
-  //   (M-3에서 sub-kΩ 검색에 'ohm' 단위를 추가하여 kΩ급 오 매칭을 방지함)
+  // - part.resistance_ohm === null (Description 파싱 실패): 검증 불가 → PASS_UNVERIFIED
+  //   (sub-kΩ 검색 'ohm' 단위로 kΩ급 오 매칭은 방지되지만 완전 검증은 불가)
   let resistanceMatch = false;
   if (extracted.resistance) {
     if (part.resistance_ohm !== null) {
@@ -99,8 +99,9 @@ export function verifyPart(
         status = 'VERIFICATION_FAILED';
       }
     } else {
-      // Description 파싱 불가 → 저항값 불명 부품이지만 PASS 허용 (검색 키워드로 1차 필터됨)
+      // Description 파싱 불가 → 역검증 수행 불가, PASS_UNVERIFIED로 표시
       resistanceMatch = true;
+      status = 'PASS_UNVERIFIED';
     }
   }
 
@@ -127,12 +128,15 @@ export function verifyPart(
     }
   }
 
-  // 전력 일치 확인 (선택)
+  // 전력 일치 확인 (선택) — 불일치 시 VERIFICATION_FAILED (저전력 부품 오구매 방지)
   let powerMatch: boolean | null = null;
   if (extracted.power && part.power_watt !== null) {
     powerMatch = Math.abs(part.power_watt - extracted.power.watt) / extracted.power.watt <= 0.05;
     if (!powerMatch) {
       mismatches.push(`Power mismatch: expected ${extracted.power.watt}W, got ${part.power_watt}W`);
+      if (status === 'PASS' || status === 'PASS_UNVERIFIED') {
+        status = 'VERIFICATION_FAILED';
+      }
     }
   }
 

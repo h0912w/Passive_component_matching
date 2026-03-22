@@ -110,7 +110,7 @@ export interface MouserPart {
 
 // ── 검증 결과 ────────────────────────────────────────────
 
-export type ValidationStatus = 'PASS' | 'RESISTANCE_NOT_FOUND' | 'EXTRACTION_INVALID' | 'AMBIGUOUS_INPUT' | 'NO_CANDIDATES' | 'VERIFICATION_FAILED';
+export type ValidationStatus = 'PASS' | 'PASS_UNVERIFIED' | 'RESISTANCE_NOT_FOUND' | 'EXTRACTION_INVALID' | 'AMBIGUOUS_INPUT' | 'NO_CANDIDATES' | 'VERIFICATION_FAILED';
 
 export interface VerificationResult {
   status: ValidationStatus;

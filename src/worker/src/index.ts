@@ -248,7 +248,7 @@ async function processInput(
     };
     if (debug) steps[`step08_verified_${i + 1}`] = step8;
 
-    if (verification.status === 'PASS') {
+    if (verification.status === 'PASS' || verification.status === 'PASS_UNVERIFIED') {
       return buildResultRow(rawInput, mergedParsed, verification);
     }
   }

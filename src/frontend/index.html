@@ -415,6 +415,7 @@
 
   function buildValidationBadge(status) {
     if (status === 'PASS') return '<span class="badge badge-pass">PASS</span>';
+    if (status === 'PASS_UNVERIFIED') return '<span class="badge badge-warn" title="역검증 불가 (Description 파싱 실패) — 검색 키워드로 1차 필터됨">PASS*</span>';
     var failCodes = ['RESISTANCE_NOT_FOUND', 'NO_CANDIDATES', 'VERIFICATION_FAILED'];
     if (failCodes.indexOf(status) !== -1) return '<span class="badge badge-fail">' + status + '</span>';
     return '<span class="badge badge-warn">' + status + '</span>';
