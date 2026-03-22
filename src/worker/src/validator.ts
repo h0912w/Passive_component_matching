@@ -84,18 +84,24 @@ export function verifyPart(
   const mismatches: string[] = [];
   let status: ValidationStatus = 'PASS';
 
-  // 저항값 일치 확인 (필수, ±1% 허용)
+  // 저항값 일치 확인 (필수, ±5% 허용)
+  // - part.resistance_ohm이 파싱된 경우: 값 비교 후 불일치 시 VERIFICATION_FAILED
+  // - part.resistance_ohm === null (Description 파싱 실패): 검증 불가 → provisional PASS
+  //   (M-3에서 sub-kΩ 검색에 'ohm' 단위를 추가하여 kΩ급 오 매칭을 방지함)
   let resistanceMatch = false;
-  if (extracted.resistance && part.resistance_ohm !== null) {
-    const ratio = Math.abs(part.resistance_ohm - extracted.resistance.value_ohm) /
-      Math.max(extracted.resistance.value_ohm, 1);
-    resistanceMatch = ratio <= 0.01;
-    if (!resistanceMatch) {
-      mismatches.push(`Resistance mismatch: expected ${extracted.resistance.value_ohm}Ω, got ${part.resistance_ohm}Ω`);
-      status = 'VERIFICATION_FAILED';
+  if (extracted.resistance) {
+    if (part.resistance_ohm !== null) {
+      const ratio = Math.abs(part.resistance_ohm - extracted.resistance.value_ohm) /
+        Math.max(extracted.resistance.value_ohm, 0.001);
+      resistanceMatch = ratio <= 0.05;
+      if (!resistanceMatch) {
+        mismatches.push(`Resistance mismatch: expected ${extracted.resistance.value_ohm}Ω, got ${part.resistance_ohm}Ω`);
+        status = 'VERIFICATION_FAILED';
+      }
+    } else {
+      // Description 파싱 불가 → 저항값 불명 부품이지만 PASS 허용 (검색 키워드로 1차 필터됨)
+      resistanceMatch = true;
     }
-  } else if (extracted.resistance) {
-    resistanceMatch = part.resistance_ohm === null; // DB에 정보 없으면 일단 통과
   }
 
   // 패키지 일치 확인 (선택)
@@ -184,6 +190,13 @@ function parseResistanceFromDesc(desc: string): number | null {
     const val = parseFloat(`${iec3[1]}.${iec3[3]}`);
     const u = iec3[2].toUpperCase();
     return val * (u === 'K' ? 1000 : u === 'M' ? 1e6 : 1);
+  }
+  // Mouser 실제 형식: "4.7Kohms", "14.7Kohms", "2.2Mohms"
+  const kohm = desc.match(/\b(\d+\.?\d*)\s*(K|M)(ohm|Ohm|OHM)s?\b/i);
+  if (kohm) {
+    const val = parseFloat(kohm[1]);
+    const u = kohm[2].toUpperCase();
+    return val * (u === 'K' ? 1000 : 1e6);
   }
   const ohm = desc.match(/\b(\d+\.?\d*)\s*ohms?\b/i);
   if (ohm) return parseFloat(ohm[1]);

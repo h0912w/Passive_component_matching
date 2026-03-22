@@ -89,7 +89,8 @@ function formatResistanceForSearch(ohm: number): string {
   if (ohm === 0) return '0 ohm';
   if (ohm >= 1_000_000) return `${(ohm / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
   if (ohm >= 1_000)     return `${(ohm / 1_000).toFixed(2).replace(/\.?0+$/, '')}k`;
-  return `${ohm}`;
+  // sub-kΩ: 단위 'ohm' 명시 — "4.7"만 보내면 4.75k 등 엉뚱한 부품이 상위 노출됨
+  return `${ohm} ohm`;
 }
 
 // ── Mouser API 응답 정규화 ───────────────────────────────
@@ -135,10 +136,17 @@ function parseResistanceFromDesc(desc: string): number | null {
     const u = iec3[2].toUpperCase();
     return val * (u === 'K' ? 1000 : u === 'M' ? 1e6 : 1);
   }
-  // 2순위: 숫자 + ohms
+  // 2순위: 숫자 + K/Mohms (Mouser 실제 형식: "4.7Kohms", "14.7Kohms", "2.2Mohms")
+  const kohm = desc.match(/\b(\d+\.?\d*)\s*(K|M)(ohm|Ohm|OHM)s?\b/i);
+  if (kohm) {
+    const val = parseFloat(kohm[1]);
+    const u = kohm[2].toUpperCase();
+    return val * (u === 'K' ? 1000 : 1e6);
+  }
+  // 3순위: 숫자 + ohms (단위 ohm, e.g. "91ohms", "4.7 ohms")
   const ohm = desc.match(/\b(\d+\.?\d*)\s*ohms?\b/i);
   if (ohm) return parseFloat(ohm[1]);
-  // 3순위: 숫자 + K/M/R 단독
+  // 4순위: 숫자 + K/M/R 단독 (e.g. "10K", "100K", "1M")
   const km = desc.match(/\b(\d+\.?\d*)\s*(K|M|R)\b/);
   if (km) {
     const val = parseFloat(km[1]);

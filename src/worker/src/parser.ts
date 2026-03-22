@@ -79,10 +79,10 @@ function preprocessInput(raw: string): string[] {
   s = s.replace(/\t/g, ' ');
 
   // 2단계: 분수 전력 패턴 보존 (1/8W, 1/4W 등)
-  // 슬러시를 공백으로 치환하기 전에 분수 패턴을 임시 토큰으로 대체
-  s = s.replace(/(\d+)\/(\d+)(w|W|watt|Watt|WATT|mW|mw)?/g, (_, n, d, u) => {
-    const unit = u || 'W';
-    return `${n}DIV${d}${unit}`;
+  // ⚠️ W/mW 단위를 필수로 요구한다. 단위 없는 숫자/숫자는 분수가 아닌 구분자로 처리.
+  // e.g. "4.7k/0603/5%" → 슬러시는 3단계에서 공백으로 대체됨 (의도된 동작)
+  s = s.replace(/(\d+)\/(\d+)(W|w|Watt|watt|WATT|mW|mw)/g, (_, n, d, u) => {
+    return `${n}DIV${d}${u}`;
   });
 
   // 3단계: 구분자 → 공백 (슬러시, 언더바, 콤마, 세미콜론)
@@ -95,9 +95,8 @@ function preprocessInput(raw: string): string[] {
   s = s.replace(/[()[\]]/g, ' ');
 
   // 6단계: 분수 토큰 복원
-  s = s.replace(/(\d+)DIV(\d+)(w|W|watt|Watt|WATT|mW|mw)?/g, (_, n, d, u) => {
-    const unit = u || 'W';
-    return `${n}/${d}${unit}`;
+  s = s.replace(/(\d+)DIV(\d+)(W|w|Watt|watt|WATT|mW|mw)/g, (_, n, d, u) => {
+    return `${n}/${d}${u}`;
   });
 
   // 7단계: 연속 공백 → 단일 공백
