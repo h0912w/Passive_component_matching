@@ -1,0 +1,62 @@
+{
+  "_comment": "저항값 파서 정규식 패턴 목록 (우선순위 순)",
+  "patterns": [
+    {
+      "id": "IEC_RKM_3PART",
+      "priority": 1,
+      "regex": "^(\\d+)([RKMrkm])(\\d+)$",
+      "description": "IEC RKM 3파트: 4R7, 2K2, 1M5",
+      "examples": ["4R7", "2K2", "1M5", "1R0", "1K0"],
+      "parse": "part1 + '.' + part3 followed by multiplier from part2"
+    },
+    {
+      "id": "IEC_RKM_2PART",
+      "priority": 2,
+      "regex": "^(\\d+)([RKMrkm])$",
+      "description": "IEC RKM 2파트: 10R, 1K, 1M",
+      "examples": ["10R", "1K", "1M", "330R", "100K"],
+      "parse": "part1 * multiplier(part2)"
+    },
+    {
+      "id": "DECIMAL_OHM_UNIT",
+      "priority": 3,
+      "regex": "^(\\d+\\.?\\d*)(ohm|Ohm|OHM|Ω|ω|R|r)$",
+      "description": "소수점 + 옴 단위: 4.7ohm, 330R",
+      "examples": ["4.7ohm", "4.7Ω", "330R", "4.7R"],
+      "parse": "float(part1) * 1"
+    },
+    {
+      "id": "DECIMAL_K_UNIT",
+      "priority": 4,
+      "regex": "^(\\d+\\.?\\d*)(k|K|kΩ|kOhm|KΩ|kohm|Kohm)$",
+      "description": "소수점 + 킬로 단위: 4.7k, 4.7K",
+      "examples": ["4.7k", "4.7K", "10k", "100K", "4.7kohm"],
+      "parse": "float(part1) * 1000"
+    },
+    {
+      "id": "DECIMAL_M_UNIT",
+      "priority": 5,
+      "regex": "^(\\d+\\.?\\d*)(M|MΩ|MOhm|Mohm|megaohm)$",
+      "description": "소수점 + 메가 단위: 1M, 2.2M",
+      "examples": ["1M", "2.2M", "1MΩ", "10M"],
+      "parse": "float(part1) * 1000000"
+    },
+    {
+      "id": "ZERO_OHM",
+      "priority": 0,
+      "regex": "^(0R|0r|0Ω|0ohm)$",
+      "description": "0옴 점퍼: 0R",
+      "examples": ["0R", "0r", "0Ω"],
+      "parse": "0"
+    }
+  ],
+  "multipliers": {
+    "R": 1,
+    "r": 1,
+    "K": 1000,
+    "k": 1000,
+    "M": 1000000,
+    "m": 0.001
+  },
+  "_note_m": "소문자 m = 밀리(10^-3). 대문자 M = 메가(10^6). 문맥에서 구분 필요."
+}

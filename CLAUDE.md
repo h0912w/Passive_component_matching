@@ -77,9 +77,8 @@
 │   │   ├── /mouser-search-client       ← Mouser API 실시간 검색
 │   │   ├── /reverse-validator          ← 최종 PN 역검증
 │   │   └── /blogger-ui-packager        ← 단일 HTML 산출물 생성 (SEO 포함)
-│   └── /agents
-│       └── /qa-fullstack-guardian
-│           └── AGENT.md
+│   └── /skills
+│       └── (스킬 파일만 위치, 에이전트 없음)
 ├── /src
 │   ├── /frontend                       ← index.html 원본
 │   ├── /worker                         ← Cloudflare Worker TypeScript 코드
@@ -386,6 +385,7 @@ RECEIVED → NORMALIZED → RULE_PARSED → PARSE_ASSESSED
 [general-purpose]        ← 단계 1~5 코드 구현 전담
          ↓
 [qa-fullstack-guardian]  ← 단계 6: 구현/수정 후 QA
+                            (글로벌 에이전트: ~/.claude/agents/qa-fullstack-guardian.md)
 ```
 
 ---
@@ -395,7 +395,7 @@ RECEIVED → NORMALIZED → RULE_PARSED → PARSE_ASSESSED
 ### 16.1 랜덤 케이스 생성 (매 QA 실행 시)
 > QA는 **고정 케이스 + 랜덤 케이스(10개 정도)**를 함께 사용한다.
 > 랜덤 케이스는 실제 저항값·패키지·오차·전력을 조합해 생성한다.
-> (생성 로직: `qa-fullstack-guardian` AGENT.md 참조)
+> (생성 로직: `/src/tests/test-cases.json` 참조 — 랜덤 케이스는 QA 실행 시 생성)
 
 ### 16.2 고정 케이스
 ```json
@@ -457,7 +457,7 @@ RECEIVED → NORMALIZED → RULE_PARSED → PARSE_ASSESSED
 수정 발생
   → /rules/ 관련 문서 갱신 여부 확인
   → 테스트 케이스 추가/갱신
-  → qa-fullstack-guardian 호출 (랜덤 케이스 포함)
+  → qa-fullstack-guardian 호출 (글로벌 에이전트, /src/tests/test-cases.json 참조)
   → /output/qa/qa_report_<timestamp>.md 확인
   → Blogger 에러 시 /rules/blogger_html_rules.md 갱신
   → GLM 계약 변경 시 /docs/glm_api_contract.md 갱신

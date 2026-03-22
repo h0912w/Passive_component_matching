@@ -1,0 +1,39 @@
+{
+  "_comment": "오차 표기 → 정규화 값 매핑. IEC 60062 문자코드 + % 표기 + 자유형 모두 포함",
+  "percent_map": {
+    "0.05%": 0.05,
+    "0.1%":  0.1,
+    "0.25%": 0.25,
+    "0.5%":  0.5,
+    "1%":    1,
+    "2%":    2,
+    "5%":    5,
+    "10%":   10,
+    "20%":   20
+  },
+  "symbol_variants": {
+    "±0.05%": 0.05, "+/-0.05%": 0.05,
+    "±0.1%":  0.1,  "+/-0.1%":  0.1,
+    "±0.25%": 0.25, "+/-0.25%": 0.25,
+    "±0.5%":  0.5,  "+/-0.5%":  0.5,
+    "±1%":    1,    "+/-1%":    1,
+    "±2%":    2,    "+/-2%":    2,
+    "±5%":    5,    "+/-5%":    5,
+    "±10%":   10,   "+/-10%":   10,
+    "±20%":   20,   "+/-20%":   20
+  },
+  "iec_codes": {
+    "B": { "percent": 0.1,  "note": "±0.1%",  "parser_direct": false },
+    "C": { "percent": 0.25, "note": "±0.25%", "parser_direct": false },
+    "D": { "percent": 0.5,  "note": "±0.5%",  "parser_direct": false },
+    "F": { "percent": 1,    "note": "±1%",    "parser_direct": true  },
+    "G": { "percent": 2,    "note": "±2%",    "parser_direct": false },
+    "J": { "percent": 5,    "note": "±5%",    "parser_direct": true  },
+    "K": { "percent": 10,   "note": "±10%",   "parser_direct": false },
+    "M": { "percent": 20,   "note": "±20%",   "parser_direct": false, "ambiguous_with": "mega_ohm" }
+  },
+  "ambiguity_rules": {
+    "M_context": "숫자 앞에 붙은 경우(1M, 2M2) → 저항값 단위(메가). 단독으로 나타나는 경우 → 오차코드(±20%)",
+    "K_context": "숫자 앞에 붙은 경우(1K, 2K2) → 저항값 단위(킬로). 단독으로 나타나는 경우 → 오차코드(±10%)"
+  }
+}

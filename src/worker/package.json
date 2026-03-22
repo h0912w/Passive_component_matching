@@ -1,0 +1,16 @@
+{
+  "name": "resistor-part-finder-worker",
+  "version": "1.0.0",
+  "description": "Cloudflare Worker: Resistor spec to Mouser Part Number converter",
+  "main": "src/index.ts",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "type-check": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240501.0",
+    "typescript": "^5.4.0",
+    "wrangler": "^3.50.0"
+  }
+}

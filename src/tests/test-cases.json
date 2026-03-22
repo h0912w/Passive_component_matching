@@ -1,0 +1,102 @@
+{
+  "_note": "qa-fullstack-guardian 에이전트가 참조하는 테스트 케이스 파일. 고정 케이스 + 랜덤 케이스 생성 규칙 포함.",
+
+  "fixed": {
+    "normal": [
+      "1k 1608 5% 0.25W",
+      "10k 0603 1% 1/10W",
+      "0R 2012",
+      "4R7 1608 5%",
+      "100k 3216 1% 1/4W",
+      "10R 2012 5% 0.5W"
+    ],
+    "partial": [
+      "1k",
+      "1k 0603",
+      "1k 5%",
+      "4R7 1608",
+      "10k 1%"
+    ],
+    "failure": [
+      "abcdef",
+      "0603 5%",
+      "1k ????",
+      "",
+      "xyz 0603"
+    ],
+    "variants": [
+      "4K7",
+      "1R0",
+      "1K0",
+      "2M2",
+      "1/16W",
+      "±5%",
+      "4.7ohm",
+      "1608 1k 5%",
+      "4.7k/0603/5%/0.25W",
+      "4k7_0603_J_125mW",
+      "4.7kohm 0603 ±5% 1/4W",
+      "10k,0603,1%,0.1W",
+      "1k;0603;5%;0.25W"
+    ],
+    "edge_cases": [
+      "0R",
+      "0R0",
+      "4R7 1608 B",
+      "4R7 1608 K",
+      "1k0603"
+    ]
+  },
+
+  "random_generation_rules": {
+    "_desc": "qa-fullstack-guardian이 QA 실행 시 이 규칙으로 랜덤 케이스 10개를 생성한다.",
+    "resistance_pool": [
+      "1R", "4R7", "10R", "22R", "47R",
+      "100R", "220R", "470R",
+      "1K", "2K2", "4K7", "10K", "22K", "47K", "100K",
+      "1M", "2M2"
+    ],
+    "package_pool": ["1608", "0603", "2012", "0805", "3216", "1206", ""],
+    "tolerance_pool": ["1%", "5%", "F", "J", "±1%", "0.1%", ""],
+    "power_pool": ["0.25W", "1/8W", "125mW", "0.1W", "1/4W", "1/10W", ""],
+    "separator_pool": [" ", "/", "_", "-", ","],
+    "count": 10,
+    "strategy": "각 케이스는 resistance 필수 + package/tolerance/power 각각 70% 확률로 포함. separator는 랜덤 선택."
+  },
+
+  "qa_checklist": {
+    "functional": [
+      "랜덤 케이스 10개 + 고정 케이스 전체 통과",
+      "복사 기능 3종 동작: PN 단건 복사, PN 열 전체 복사, TSV 전체 복사",
+      "에러 상황 표시: RESISTANCE_NOT_FOUND / NO_CANDIDATES / VERIFICATION_FAILED",
+      "일괄 입력(배치) 검색 동작",
+      "Enter 키 검색 동작"
+    ],
+    "ui": [
+      "브라우저 콘솔 에러 없음",
+      "로딩 스피너 표시",
+      "결과 테이블 11열 정상 렌더링",
+      "Mouser URL 링크 동작",
+      "모바일 반응형 (560px 이하)"
+    ],
+    "blogger": [
+      "output/build/index.html 을 Blogger HTML 에디터에 붙여넣기 가능",
+      "resistor-tool-root 래퍼 존재",
+      "Blogger 렌더링 후 JS 동작 정상",
+      "CSS 스코핑 — Blogger 기존 스타일 오염 없음"
+    ],
+    "network": [
+      "CORS 오류 없음",
+      "Worker /health 엔드포인트 200 응답",
+      "Worker /parse 엔드포인트 정상 응답"
+    ]
+  },
+
+  "expected_behaviors": {
+    "RESISTANCE_NOT_FOUND": "저항값 추출 완전 실패 시 — GLM 보조 후에도 resistance null",
+    "EXTRACTION_INVALID": "입력이 완전히 파싱 불가능한 쓰레기 문자열",
+    "AMBIGUOUS_INPUT": "여러 해석이 가능하고 GLM도 결론 못 낼 때",
+    "NO_CANDIDATES": "Mouser 검색 결과 0건",
+    "VERIFICATION_FAILED": "상위 3개 후보 모두 역검증 실패"
+  }
+}

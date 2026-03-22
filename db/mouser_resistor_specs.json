@@ -1,0 +1,17 @@
+{
+  "_note": "이 파일은 최초 1회 Mouser API로부터 수집한 저항 스펙 DB입니다. /docs/mouser_db_guide.md 참조.",
+  "_status": "PENDING_COLLECTION — mouser-db-builder 스킬로 수집 후 이 파일을 교체하세요.",
+  "metadata": {
+    "collected_at": null,
+    "source": "Mouser API",
+    "total_count": 0,
+    "version": "0.0",
+    "note": "수집 전 초기 상태"
+  },
+  "specs": {
+    "resistance_values_ohm": [],
+    "packages": [],
+    "tolerances_percent": [],
+    "power_ratings_watt": []
+  }
+}

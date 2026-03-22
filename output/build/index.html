@@ -1,0 +1,286 @@
+<div id="resistor-tool-root">
+<style>
+#resistor-tool-root{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;color:#212529;line-height:1.5}
+#resistor-tool-root *,#resistor-tool-root *::before,#resistor-tool-root *::after{box-sizing:border-box;margin:0;padding:0}
+#resistor-tool-root .rt-intro{margin-bottom:20px}
+#resistor-tool-root .rt-intro h2{font-size:1.3rem;font-weight:700;margin-bottom:4px}
+#resistor-tool-root .rt-intro p{font-size:.875rem;color:#6c757d}
+#resistor-tool-root .rt-card{background:#fff;border:1px solid #dee2e6;border-radius:8px;padding:16px;margin-bottom:12px}
+#resistor-tool-root .rt-row{display:flex;gap:8px;align-items:stretch;flex-wrap:wrap}
+#resistor-tool-root .rt-input{flex:1;min-width:200px;padding:10px 14px;border:1px solid #ced4da;border-radius:6px;font-size:1rem;outline:none}
+#resistor-tool-root .rt-input:focus{border-color:#0d6efd;box-shadow:0 0 0 3px rgba(13,110,253,.15)}
+#resistor-tool-root .rt-btn{padding:10px 18px;border:none;border-radius:6px;font-size:.9rem;font-weight:500;cursor:pointer;white-space:nowrap}
+#resistor-tool-root .rt-btn-p{background:#0d6efd;color:#fff}
+#resistor-tool-root .rt-btn-p:hover{background:#0b5ed7}
+#resistor-tool-root .rt-btn-p:disabled{background:#6ea8fe;cursor:not-allowed}
+#resistor-tool-root .rt-btn-s{background:#6c757d;color:#fff}
+#resistor-tool-root .rt-btn-s:hover{background:#5c636a}
+#resistor-tool-root .rt-btn-xs{padding:3px 9px;font-size:.75rem}
+#resistor-tool-root .rt-hint{margin-top:8px;font-size:.8rem;color:#6c757d}
+#resistor-tool-root .rt-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+#resistor-tool-root .rt-chip{background:#e9ecef;border:none;border-radius:20px;padding:3px 10px;font-size:.78rem;cursor:pointer}
+#resistor-tool-root .rt-chip:hover{background:#dee2e6}
+#resistor-tool-root .rt-status{min-height:28px;margin-bottom:8px;font-size:.875rem}
+#resistor-tool-root .rt-status-l{color:#0d6efd;display:flex;gap:6px;align-items:center}
+#resistor-tool-root .rt-status-e{color:#dc3545}
+#resistor-tool-root .rt-status-s{color:#198754}
+#resistor-tool-root .rt-spin{width:14px;height:14px;border:2px solid #cfe2ff;border-top-color:#0d6efd;border-radius:50%;animation:rtspin .7s linear infinite;flex-shrink:0}
+@keyframes rtspin{to{transform:rotate(360deg)}}
+#resistor-tool-root .rt-result{background:#fff;border:1px solid #dee2e6;border-radius:8px;overflow:hidden}
+#resistor-tool-root .rt-result-hd{display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-bottom:1px solid #dee2e6;background:#f8f9fa;flex-wrap:wrap;gap:6px}
+#resistor-tool-root .rt-result-hd h3{font-size:.9rem;font-weight:600}
+#resistor-tool-root .rt-copy-btns{display:flex;gap:6px}
+#resistor-tool-root .rt-wrap{overflow-x:auto}
+#resistor-tool-root table{width:100%;border-collapse:collapse;font-size:.82rem}
+#resistor-tool-root th{background:#f1f3f5;padding:7px 10px;text-align:left;font-weight:600;border-bottom:2px solid #dee2e6;white-space:nowrap}
+#resistor-tool-root td{padding:7px 10px;border-bottom:1px solid #f1f3f5;vertical-align:middle}
+#resistor-tool-root tr:last-child td{border-bottom:none}
+#resistor-tool-root tr:hover td{background:#f8f9fa}
+#resistor-tool-root .rt-pn{display:flex;align-items:center;gap:5px}
+#resistor-tool-root .rt-pnlink{color:#0d6efd;text-decoration:none;font-weight:500}
+#resistor-tool-root .rt-pnlink:hover{text-decoration:underline}
+#resistor-tool-root .rt-cpbtn{background:none;border:1px solid #ced4da;border-radius:4px;padding:2px 6px;font-size:.72rem;cursor:pointer;color:#6c757d}
+#resistor-tool-root .rt-cpbtn:hover{background:#e9ecef;color:#212529}
+#resistor-tool-root .rt-badge{display:inline-block;padding:2px 7px;border-radius:10px;font-size:.72rem;font-weight:600}
+#resistor-tool-root .rt-pass{background:#d1e7dd;color:#0a3622}
+#resistor-tool-root .rt-fail{background:#f8d7da;color:#58151c}
+#resistor-tool-root .rt-warn{background:#fff3cd;color:#664d03}
+#resistor-tool-root .rt-muted{color:#adb5bd;font-style:italic}
+#resistor-tool-root .rt-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(12px);background:#212529;color:#fff;padding:7px 18px;border-radius:20px;font-size:.82rem;opacity:0;transition:opacity .2s,transform .2s;pointer-events:none;z-index:99999}
+#resistor-tool-root .rt-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#resistor-tool-root .rt-batch-toggle{font-size:.8rem;color:#0d6efd;cursor:pointer;background:none;border:none;padding:4px 0;margin-top:8px}
+#resistor-tool-root .rt-batch-area{display:none;margin-top:8px}
+#resistor-tool-root .rt-batch-area.open{display:block}
+#resistor-tool-root .rt-textarea{width:100%;min-height:70px;padding:8px;border:1px solid #ced4da;border-radius:6px;font-size:.82rem;resize:vertical}
+@media(max-width:560px){
+  #resistor-tool-root .rt-row{flex-direction:column}
+  #resistor-tool-root th,#resistor-tool-root td{padding:5px 7px}
+}
+</style>
+
+<!-- SEO 소개 문구 -->
+<div class="rt-intro">
+  <h2>저항 스펙 → Mouser 부품번호 자동 변환기</h2>
+  <p>회로도에 기입된 저항 스펙(예: 4R7 1608 5% 0.25W)을 입력하면 구매 가능한 Mouser Part Number를 즉시 찾아드립니다.</p>
+</div>
+
+<!-- 입력 카드 -->
+<div class="rt-card">
+  <div class="rt-row">
+    <input id="rt-inp" class="rt-input" type="text" placeholder="예: 4R7 1608 5% 0.25W" autocomplete="off" spellcheck="false">
+    <button class="rt-btn rt-btn-p" id="rt-search-btn">검색</button>
+    <button class="rt-btn rt-btn-s" id="rt-clear-btn">초기화</button>
+  </div>
+  <p class="rt-hint">지원: IEC(4R7, 2K2), 소수점(4.7k), 패키지(0603/1608 양방향), 오차(1%/F/J), 전력(1/8W/125mW)</p>
+  <div class="rt-chips">
+    <span style="font-size:.78rem;color:#6c757d">예시:</span>
+    <button class="rt-chip" data-ex="4R7 1608 5% 0.25W">4R7 1608 5% 0.25W</button>
+    <button class="rt-chip" data-ex="10k 0603 1% 1/10W">10k 0603 1% 1/10W</button>
+    <button class="rt-chip" data-ex="0R 2012">0R 2012</button>
+    <button class="rt-chip" data-ex="4.7k/0603/5%/0.25W">4.7k/0603/5%/0.25W</button>
+    <button class="rt-chip" data-ex="1K">1K</button>
+    <button class="rt-chip" data-ex="2M2 3216 J 1W">2M2 3216 J 1W</button>
+  </div>
+  <button class="rt-batch-toggle" id="rt-batch-toggle">▼ 여러 항목 일괄 검색</button>
+  <div class="rt-batch-area" id="rt-batch-area">
+    <p style="font-size:.78rem;color:#6c757d;margin-bottom:5px">한 줄에 하나씩 입력하세요.</p>
+    <textarea id="rt-batch-inp" class="rt-textarea" placeholder="4R7 1608 5% 0.25W&#10;10k 0603 1%&#10;1K 0805"></textarea>
+    <button class="rt-btn rt-btn-p rt-btn-xs" id="rt-batch-btn" style="margin-top:5px">일괄 검색</button>
+  </div>
+</div>
+
+<!-- 상태 -->
+<div id="rt-status" class="rt-status"></div>
+
+<!-- 결과 -->
+<div id="rt-result" class="rt-result" style="display:none">
+  <div class="rt-result-hd">
+    <h3 id="rt-result-title">검색 결과</h3>
+    <div class="rt-copy-btns">
+      <button class="rt-btn rt-btn-s rt-btn-xs" id="rt-copy-tsv">TSV 전체 복사</button>
+      <button class="rt-btn rt-btn-s rt-btn-xs" id="rt-copy-pn">PN 열 복사</button>
+    </div>
+  </div>
+  <div class="rt-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>Input</th><th>Mouser PN</th>
+          <th>Input Resistance</th><th>PN Resistance</th>
+          <th>Input Package</th><th>PN Package</th>
+          <th>Input Tolerance</th><th>PN Tolerance</th>
+          <th>Input Power</th><th>PN Power</th>
+          <th>Validation</th>
+        </tr>
+      </thead>
+      <tbody id="rt-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- FAQ (SEO) -->
+<details style="margin-top:20px;font-size:.85rem">
+  <summary style="cursor:pointer;font-weight:600;padding:6px 0">자주 묻는 질문 (FAQ)</summary>
+  <div style="padding:10px 0;display:grid;gap:10px">
+    <div><strong>Q: 어떤 형식으로 입력해야 하나요?</strong><br>A: 회로도에 기입된 그대로 입력하면 됩니다. "4R7 1608 5% 0.25W", "4.7k/0603/5%/0.25W", "4k7_0603_J_1/4W" 등 다양한 형식을 지원합니다.</div>
+    <div><strong>Q: 저항값만 입력해도 되나요?</strong><br>A: 네. "1K"처럼 저항값만 입력하면 저항값이 일치하는 부품을 검색합니다.</div>
+    <div><strong>Q: 0603과 1608은 같은 크기인가요?</strong><br>A: 네. 0603(인치)과 1608(메트릭)은 동일한 1.6mm×0.8mm 크기입니다. 어떤 표기로 입력해도 자동으로 양쪽 모두 검색합니다.</div>
+    <div><strong>Q: IEC 표기(4R7, 2K2)란 무엇인가요?</strong><br>A: IEC 60062 표준에서 소수점 대신 단위 문자를 삽입하는 표기법입니다. 4R7 = 4.7Ω, 2K2 = 2.2kΩ.</div>
+  </div>
+</details>
+
+<p style="margin-top:12px;font-size:.75rem;color:#adb5bd">이 도구는 Mouser API를 사용합니다. 검색 결과는 Mouser 재고 상황에 따라 달라질 수 있습니다.</p>
+
+<!-- Toast -->
+<div id="rt-toast" class="rt-toast"></div>
+
+<script type="text/javascript">
+(function(){
+'use strict';
+
+/* ── 설정 ── WORKER_URL을 실제 배포된 Worker URL로 교체하세요 ── */
+var WORKER_URL='https://resistor-part-finder.your-subdomain.workers.dev';
+
+var _results=[];
+var _toastTimer=null;
+
+/* ── DOM 참조 ── */
+var inp=document.getElementById('rt-inp');
+var searchBtn=document.getElementById('rt-search-btn');
+var clearBtn=document.getElementById('rt-clear-btn');
+var batchToggle=document.getElementById('rt-batch-toggle');
+var batchArea=document.getElementById('rt-batch-area');
+var batchInp=document.getElementById('rt-batch-inp');
+var batchBtn=document.getElementById('rt-batch-btn');
+var statusEl=document.getElementById('rt-status');
+var resultEl=document.getElementById('rt-result');
+var resultTitle=document.getElementById('rt-result-title');
+var tbody=document.getElementById('rt-tbody');
+var copyTsvBtn=document.getElementById('rt-copy-tsv');
+var copyPnBtn=document.getElementById('rt-copy-pn');
+var toast=document.getElementById('rt-toast');
+
+/* ── 예시 칩 이벤트 ── */
+var chips=document.querySelectorAll('#resistor-tool-root .rt-chip');
+for(var i=0;i<chips.length;i++){
+  chips[i].addEventListener('click',(function(ex){return function(){inp.value=ex;inp.focus();}})(chips[i].getAttribute('data-ex')));
+}
+
+/* ── 버튼 이벤트 ── */
+searchBtn.addEventListener('click',doSearch);
+clearBtn.addEventListener('click',doClear);
+batchToggle.addEventListener('click',function(){batchArea.classList.toggle('open');});
+batchBtn.addEventListener('click',doBatch);
+copyTsvBtn.addEventListener('click',doCopyTsv);
+copyPnBtn.addEventListener('click',doCopyPn);
+inp.addEventListener('keydown',function(e){if(e.key==='Enter')doSearch();});
+
+/* ── 단건 검색 ── */
+async function doSearch(){
+  var v=inp.value.trim();
+  if(!v){showStatus('입력값을 입력하세요.','e');return;}
+  setLoading(true);_results=[];
+  try{
+    var row=await callWorker(v);
+    _results=[row];
+    render(_results);
+    showStatus('검색 완료','s');
+  }catch(e){showStatus('오류: '+e.message,'e');}
+  finally{setLoading(false);}
+}
+
+/* ── 일괄 검색 ── */
+async function doBatch(){
+  var lines=batchInp.value.split('\n').map(function(l){return l.trim();}).filter(Boolean);
+  if(!lines.length){showStatus('입력값을 입력하세요.','e');return;}
+  setLoading(true);_results=[];
+  for(var i=0;i<lines.length;i++){
+    showStatus((i+1)+' / '+lines.length+' 처리 중...','l');
+    try{_results.push(await callWorker(lines[i]));}
+    catch(e){_results.push({input:lines[i],mouser_pn:null,input_resistance:null,pn_resistance:null,input_package:null,pn_package:null,input_tolerance:null,pn_tolerance:null,input_power:null,pn_power:null,validation:'EXTRACTION_INVALID',mouser_url:null});}
+  }
+  render(_results);showStatus(lines.length+'개 처리 완료','s');setLoading(false);
+}
+
+/* ── Worker 호출 ── */
+async function callWorker(input){
+  var resp=await fetch(WORKER_URL+'/parse',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({input:input})});
+  var data=await resp.json();
+  if(!data.success)throw new Error(data.error||data.error_code||'Unknown error');
+  return data.result;
+}
+
+/* ── 초기화 ── */
+function doClear(){inp.value='';resultEl.style.display='none';statusEl.innerHTML='';_results=[];}
+
+/* ── 테이블 렌더링 ── */
+function render(rows){
+  tbody.innerHTML='';
+  rows.forEach(function(r,i){
+    var tr=document.createElement('tr');
+    tr.innerHTML=
+      '<td>'+(i+1)+'</td>'+
+      '<td>'+esc(r.input)+'</td>'+
+      '<td>'+pnCell(r.mouser_pn,r.mouser_url)+'</td>'+
+      '<td>'+(r.input_resistance||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.pn_resistance||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.input_package||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.pn_package||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.input_tolerance||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.pn_tolerance||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.input_power||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+(r.pn_power||'<span class="rt-muted">-</span>')+'</td>'+
+      '<td>'+badge(r.validation)+'</td>';
+    tbody.appendChild(tr);
+  });
+  resultTitle.textContent='검색 결과 ('+rows.length+'건)';
+  resultEl.style.display='block';
+}
+
+function pnCell(pn,url){
+  if(!pn)return '<span class="rt-muted">-</span>';
+  var link=url?'<a class="rt-pnlink" href="'+esc(url)+'" target="_blank" rel="noopener">'+esc(pn)+'</a>':'<span class="rt-pnlink">'+esc(pn)+'</span>';
+  var pnEscaped=esc(pn).replace(/'/g,'&#39;');
+  return '<div class="rt-pn">'+link+'<button class="rt-cpbtn" data-pn="'+pnEscaped+'">복사</button></div>';
+}
+
+/* 동적 복사 버튼 위임 */
+tbody.addEventListener('click',function(e){
+  var btn=e.target.closest('.rt-cpbtn');
+  if(btn){copyText(btn.getAttribute('data-pn'),'복사됨: '+btn.getAttribute('data-pn'));}
+});
+
+function badge(v){
+  if(v==='PASS')return '<span class="rt-badge rt-pass">PASS</span>';
+  var fails=['RESISTANCE_NOT_FOUND','NO_CANDIDATES','VERIFICATION_FAILED'];
+  if(fails.indexOf(v)!==-1)return '<span class="rt-badge rt-fail">'+v+'</span>';
+  return '<span class="rt-badge rt-warn">'+v+'</span>';
+}
+
+/* ── 복사 ── */
+function doCopyPn(){if(!_results.length)return;copyText(_results.map(function(r){return r.mouser_pn||'-';}).join('\n'),'PN 열 복사됨');}
+function doCopyTsv(){
+  if(!_results.length)return;
+  var hdr=['Input','Mouser PN','Input Resistance','PN Resistance','Input Package','PN Package','Input Tolerance','PN Tolerance','Input Power','PN Power','Validation'];
+  var rows=[hdr.join('\t')];
+  _results.forEach(function(r){rows.push([r.input,r.mouser_pn||'-',r.input_resistance||'-',r.pn_resistance||'-',r.input_package||'-',r.pn_package||'-',r.input_tolerance||'-',r.pn_tolerance||'-',r.input_power||'-',r.pn_power||'-',r.validation].join('\t'));});
+  copyText(rows.join('\n'),'TSV 복사됨 ('+_results.length+'행)');
+}
+function copyText(t,msg){
+  if(navigator.clipboard){navigator.clipboard.writeText(t).then(function(){showToast(msg);});}
+  else{var ta=document.createElement('textarea');ta.value=t;ta.style.cssText='position:fixed;opacity:0';document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);showToast(msg);}
+}
+
+/* ── UI 헬퍼 ── */
+function setLoading(on){searchBtn.disabled=on;}
+function showStatus(msg,type){
+  var cls=type==='l'?'rt-status-l':type==='e'?'rt-status-e':'rt-status-s';
+  var spin=type==='l'?'<div class="rt-spin"></div>':'';
+  statusEl.innerHTML='<div class="'+cls+'">'+spin+'<span>'+esc(msg)+'</span></div>';
+}
+function showToast(msg){toast.textContent=msg;toast.classList.add('show');if(_toastTimer)clearTimeout(_toastTimer);_toastTimer=setTimeout(function(){toast.classList.remove('show');},2000);}
+function esc(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+})();
+</script>
+</div>
