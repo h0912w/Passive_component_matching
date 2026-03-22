@@ -182,11 +182,18 @@ export function filterCandidates(
   parts: MouserPart[],
   params: MouserSearchParams,
 ): MouserPart[] {
+  // 저항값 필터 윈도우: 사용자 지정 오차가 5%보다 엄격하면 그 값을 사용
+  // e.g. 사용자가 1% 오차를 명시했다면 검색 후보도 ±1% 범위만 허용
+  const toleranceFraction = params.tolerance_percent !== undefined
+    ? Math.max(params.tolerance_percent / 100, 0.01)  // 최소 ±1% 허용
+    : 0.05;  // 기본값 ±5%
+  const resistanceWindow = Math.min(toleranceFraction, 0.05);  // 최대 ±5%까지
+
   return parts.filter(p => {
-    // 저항값 필터 (필수, ±5% 허용)
-    if (p.resistance_ohm !== null) {
+    // 저항값 필터 (필수, 사용자 오차 또는 ±5% 중 좁은 값 적용)
+    if (p.resistance_ohm !== null && params.resistance_ohm > 0) {
       const ratio = Math.abs(p.resistance_ohm - params.resistance_ohm) / params.resistance_ohm;
-      if (ratio > 0.05) return false;
+      if (ratio > resistanceWindow) return false;
     }
 
     // 패키지 필터 (있을 때만)
