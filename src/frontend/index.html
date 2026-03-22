@@ -1,20 +1,52 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>저항 스펙 → Mouser 부품번호 자동 변환기 | Resistor Part Number Finder</title>
-  <meta name="description" content="저항 스펙 문자열(예: 4R7 1608 5% 0.25W)을 입력하면 Mouser에서 구매 가능한 Part Number를 자동으로 찾아주는 도구입니다.">
-  <meta name="keywords" content="저항 부품번호, resistor part number, Mouser 저항, 칩저항 검색, 저항 스펙 변환, SMD resistor finder">
+  <title>Resistor Value to Part Number Conversion: Cut BOM Management Time with Mouser API</title>
+  <meta name="description" content="Input circuit diagram resistor values, and our tool searches for real Part Numbers and stock via Mouser API. Streamline BOM management with precise matching using Regex and AI. No installation required—use directly in your browser.">
+  <meta name="keywords" content="Resistor Value to Part Number Conversion, Mouser API Integration, BOM Management Automation, Circuit Diagram Resistor Parsing, Real-time Stock Check API, Hardware Engineer Efficiency">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "WebApplication",
-    "name": "저항 스펙 → Mouser 부품번호 변환기",
-    "description": "저항 스펙 문자열을 Mouser Part Number로 변환하는 무료 도구",
+    "@type": "SoftwareApplication",
+    "name": "Resistor Value to Part Number Conversion Tool",
+    "description": "Instantly converts resistor values extracted from circuit diagrams into real, in-stock part numbers via Mouser API integration. Achieved over 99% data recognition rate by combining Regex and GLM AI.",
     "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "Any",
-    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KRW" }
+    "operatingSystem": "Browser",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Can conversion work if the resistor value data extracted from the circuit diagram is corrupted?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, GLM AI natural language processing is applied to accurately interpret the correct resistor value and match the part number, even with typos, spaces, or incorrect unit notations, by understanding the context."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What information is provided through the Mouser integration?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Via the Mouser API, we provide immediate real-time stock checks (In Stock), accurate manufacturer Part Numbers, unit prices, and available quantities, helping to prevent stock shortages during BOM management."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I need to install a separate program to use this service?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, it is a web-based service, so you can use it immediately by clicking the link without any installation. This is advantageous even in environments with corporate security software installed."
+        }
+      }
+    ]
   }
   </script>
   <style>
@@ -238,7 +270,7 @@
 
   <div id="resultSection" class="result-section" style="display:none;">
     <div class="result-header">
-      <h2 id="resultTitle">검색 결과</h2>
+      <h2 id="resultTitle" style="font-size:0.95rem;font-weight:600;">검색 결과</h2>
       <div class="copy-actions">
         <button class="btn btn-secondary btn-sm" onclick="copyTsv()">TSV 전체 복사</button>
         <button class="btn btn-secondary btn-sm" onclick="copyPnColumn()">PN 열 복사</button>
@@ -266,6 +298,69 @@
       </table>
     </div>
   </div>
+  <!-- ── SEO Content Sections (seo_content.md 기반) ── -->
+  <div style="margin-top:48px;padding-top:24px;border-top:1px solid #dee2e6;">
+
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:8px;">Precise Resistor Value Parsing with Regex and AI</h2>
+    <h3 style="font-size:1rem;font-weight:600;color:#495057;margin-bottom:8px;">Handling Complex Circuit Diagram Data Effortlessly</h3>
+    <p style="font-size:0.9rem;color:#495057;margin-bottom:12px;">
+      Introduce a web service that instantly converts resistor values extracted from circuit diagrams into real, in-stock part numbers via Mouser API integration.
+      Accessible directly in the browser without installation, it accurately handles complex inputs using Regex and AI technology.
+    </p>
+    <ul style="font-size:0.9rem;color:#495057;margin-left:20px;margin-bottom:20px;">
+      <li>Automatic recognition of various expressions like "10k", "10,000", "10k ohm"</li>
+      <li>GLM AI NLP to infer and handle typos or missing units</li>
+      <li>Achieves over 99% recognition rate based on Regex parsing</li>
+    </ul>
+
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:8px;">Real-time Search and Stock Check via Mouser API Integration</h2>
+    <h3 style="font-size:1rem;font-weight:600;color:#495057;margin-bottom:8px;">Providing Reliable Data Ready for Practical Application</h3>
+    <ol style="font-size:0.9rem;color:#495057;margin-left:20px;margin-bottom:20px;">
+      <li>User inputs resistor value list</li>
+      <li>System sends real-time search request via Mouser API</li>
+      <li>Returns Part Number with stock availability (In Stock) and pricing info</li>
+    </ol>
+
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:8px;">Browser-Based BOM Management Convenience with No Installation</h2>
+    <h3 style="font-size:1rem;font-weight:600;color:#495057;margin-bottom:8px;">Cloud Environment Accessible Anywhere</h3>
+    <ul style="font-size:0.9rem;color:#495057;margin-left:20px;margin-bottom:32px;">
+      <li>No separate software installation required</li>
+      <li>Run immediately on Blogger or any web browser</li>
+      <li>Supports both mobile and desktop</li>
+    </ul>
+
+    <!-- FAQ Section -->
+    <h2 style="font-size:1.25rem;font-weight:700;margin-bottom:16px;">FAQ</h2>
+
+    <div style="margin-bottom:16px;">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:6px;">Q: Can conversion work if the resistor value data extracted from the circuit diagram is corrupted?</h3>
+      <p style="font-size:0.9rem;color:#495057;">
+        Yes, GLM AI natural language processing is applied to accurately interpret the correct resistor value and match the part number,
+        even with typos, spaces, or incorrect unit notations, by understanding the context.
+      </p>
+    </div>
+
+    <div style="margin-bottom:16px;">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:6px;">Q: What information is provided through the Mouser integration?</h3>
+      <p style="font-size:0.9rem;color:#495057;">
+        Via the Mouser API, we provide immediate real-time stock checks (In Stock), accurate manufacturer Part Numbers, unit prices,
+        and available quantities, helping to prevent stock shortages during BOM management.
+      </p>
+    </div>
+
+    <div style="margin-bottom:32px;">
+      <h3 style="font-size:1rem;font-weight:600;margin-bottom:6px;">Q: Do I need to install a separate program to use this service?</h3>
+      <p style="font-size:0.9rem;color:#495057;">
+        No, it is a web-based service, so you can use it immediately by clicking the link without any installation.
+        This is advantageous even in environments with corporate security software installed.
+      </p>
+    </div>
+
+    <p style="font-size:0.9rem;color:#495057;font-style:italic;">
+      Copy and paste your circuit diagram resistor values now and find the optimal part number in just 1 minute.
+    </p>
+  </div>
+
 </div>
 
 <div id="toast" class="toast"></div>

@@ -17,6 +17,7 @@
 | 🚫 6 | **규칙 문서(`/rules/`)를 갱신하지 않고 프롬프트만 계속 덧대는 방식으로 유지보수하는 것** |
 | 🚫 7 | **서비스 런타임 경로에서 Claude Code 또는 Claude Code 내장 LLM을 호출하는 것** |
 | 🚫 8 | **멀티 유통사 통합 검색 또는 저항 외 부품군으로 범위를 확장하는 것** |
+| 🚫 9 | **`/docs/seo_content.md`를 읽지 않고 `src/frontend/index.html`을 작성하거나 수정하는 것 — title/meta description/JSON-LD/FAQ 섹션은 반드시 이 파일의 내용을 그대로 적용해야 한다** |
 
 ---
 
@@ -477,7 +478,13 @@ QA 실행 시 AI는 반드시 아래 절차를 직접 수행해야 한다:
 3. GLM API 호출 시 `used: true, reason` 로깅 필수
 4. `resistance` 없으면 즉시 반환
 5. 모든 API 키는 Worker Secret에서만 읽기
-6. HTML 생성 전 `/docs/seo_content.md` 먼저 읽기
+6. **HTML 생성·수정 전 `/docs/seo_content.md` 반드시 읽고 아래 항목을 파일 내용 그대로 적용할 것**
+   - `<title>` 태그: seo_content.md의 Title Recommendations 1번 사용
+   - `<meta name="description">`: seo_content.md의 Meta description 문구 그대로
+   - `<meta name="keywords">`: seo_content.md의 Key Keywords 목록
+   - JSON-LD: SoftwareApplication schema + FAQ schema (3개 Q&A)
+   - `<body>` 내 SEO 섹션: H2/H3 구조 + FAQ 섹션 (툴 UI 아래에 배치)
+   - **파일에 없는 SEO 문구 임의 추가 금지**
 
 ### 수정 후 의무 절차
 ```
