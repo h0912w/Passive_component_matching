@@ -154,7 +154,7 @@ async function processInput(
         package_match: null,
         tolerance_match: null,
         power_match: null,
-        mismatch_details: ['resistance field could not be extracted even with GLM assistance'],
+        mismatch_details: ['resistance field could not be extracted even with AI assistance'],
       });
     }
   } else if (confidence.glm_double_check) {

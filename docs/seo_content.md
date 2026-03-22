@@ -26,7 +26,7 @@
   - H3: Handling Complex Circuit Diagram Data Effortlessly
   - Bullet points/examples:
     - Automatic recognition of various expressions like "10k", "10,000", "10k ohm"
-    - GLM AI NLP to infer and handle typos or missing units
+    - AI NLP to infer and handle typos or missing units
     - Achieves over 99% recognition rate based on Regex parsing
 
 - H2 Section 2: Real-time Search and Stock Check via Mouser API Integration
@@ -46,7 +46,7 @@
 
 #### 3. FAQ Section (AI Citation Optimized)
 ### Q: Can conversion work if the resistor value data extracted from the circuit diagram is corrupted?
-**A:** Yes, GLM AI natural language processing is applied to accurately interpret the correct resistor value and match the part number, even with typos, spaces, or incorrect unit notations, by understanding the context.
+**A:** Yes, AI natural language processing is applied to accurately interpret the correct resistor value and match the part number, even with typos, spaces, or incorrect unit notations, by understanding the context.
 
 ### Q: What information is provided through the Mouser integration?
 **A:** Via the Mouser API, we provide immediate real-time stock checks (In Stock), accurate manufacturer Part Numbers, unit prices, and available quantities, helping to prevent stock shortages during BOM management.
@@ -71,4 +71,4 @@
 - FAQ Schema application recommended (Convert above FAQ section to JSON-LD and apply)
 - Structured data (JSON-LD) suggestion: Use SoftwareApplication schema to specify service name, operating system (Browser), and offered functions (AggregateRating)
 - Source citation method: State clearly that Mouser API data is used to ensure reliability
-- Citation-friendly format: Use specific numbers like "Achieved over 99% data recognition rate by combining Regex and GLM AI"
+- Citation-friendly format: Use specific numbers like "Achieved over 99% data recognition rate by combining Regex and AI"

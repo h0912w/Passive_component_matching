@@ -11,7 +11,7 @@
     "@context": "https://schema.org",
     "@type": "SoftwareApplication",
     "name": "Resistor Value to Part Number Conversion Tool",
-    "description": "Instantly converts resistor values extracted from circuit diagrams into real, in-stock part numbers via Mouser API integration. Achieved over 99% data recognition rate by combining Regex and GLM AI.",
+    "description": "Instantly converts resistor values extracted from circuit diagrams into real, in-stock part numbers via Mouser API integration. Achieved over 99% data recognition rate by combining Regex and AI.",
     "applicationCategory": "UtilitiesApplication",
     "operatingSystem": "Browser",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
@@ -27,7 +27,7 @@
         "name": "Can conversion work if the resistor value data extracted from the circuit diagram is corrupted?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Yes, GLM AI natural language processing is applied to accurately interpret the correct resistor value and match the part number, even with typos, spaces, or incorrect unit notations, by understanding the context."
+          "text": "Yes, AI natural language processing is applied to accurately interpret the correct resistor value and match the part number, even with typos, spaces, or incorrect unit notations, by understanding the context."
         }
       },
       {
@@ -229,8 +229,8 @@
 </head>
 <body>
 <div class="container">
-  <h1>저항 스펙 → Mouser 부품번호 변환기</h1>
-  <p class="subtitle">회로도 저항 표기를 입력하면 구매 가능한 Mouser Part Number를 즉시 찾아드립니다</p>
+  <h1>Resistor Spec to Mouser Part Number Finder</h1>
+  <p class="subtitle">Enter a resistor spec from your circuit diagram and find an in-stock Mouser Part Number instantly.</p>
 
   <div class="input-area">
     <div class="input-row">
@@ -238,16 +238,16 @@
         id="specInput"
         class="spec-input"
         type="text"
-        placeholder="예: 4R7 1608 5% 0.25W"
+        placeholder="e.g. 4R7 1608 5% 0.25W"
         autocomplete="off"
         spellcheck="false"
       >
-      <button id="searchBtn" class="btn btn-primary" onclick="handleSearch()">검색</button>
-      <button id="clearBtn" class="btn btn-secondary" onclick="handleClear()">초기화</button>
+      <button id="searchBtn" class="btn btn-primary" onclick="handleSearch()">Search</button>
+      <button id="clearBtn" class="btn btn-secondary" onclick="handleClear()">Clear</button>
     </div>
-    <p class="hint">지원 표기: IEC(4R7, 2K2), 소수점(4.7k), 패키지(0603/1608), 오차(1%/F), 전력(1/8W/125mW)</p>
+    <p class="hint">Supported formats: IEC (4R7, 2K2), decimal (4.7k), package (0603/1608), tolerance (1%/F), power (1/8W/125mW)</p>
     <div class="examples">
-      <span>예시:</span>
+      <span>Examples:</span>
       <button class="example-chip" onclick="fillExample('4R7 1608 5% 0.25W')">4R7 1608 5% 0.25W</button>
       <button class="example-chip" onclick="fillExample('10k 0603 1% 1/10W')">10k 0603 1% 1/10W</button>
       <button class="example-chip" onclick="fillExample('0R 2012')">0R 2012</button>
@@ -257,11 +257,11 @@
     </div>
 
     <div style="margin-top:12px;">
-      <button class="batch-toggle" onclick="toggleBatch()">▼ 여러 항목 일괄 검색</button>
+      <button class="batch-toggle" onclick="toggleBatch()">▼ Batch Search</button>
       <div id="batchArea" class="batch-area">
-        <p style="font-size:0.82rem;color:#6c757d;margin-bottom:6px;">한 줄에 하나씩 입력하세요.</p>
+        <p style="font-size:0.82rem;color:#6c757d;margin-bottom:6px;">Enter one spec per line.</p>
         <textarea id="batchInput" class="batch-textarea" placeholder="4R7 1608 5% 0.25W&#10;10k 0603 1%&#10;1K 0805"></textarea>
-        <button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="handleBatchSearch()">일괄 검색</button>
+        <button class="btn btn-primary btn-sm" style="margin-top:6px;" onclick="handleBatchSearch()">Search All</button>
       </div>
     </div>
   </div>
@@ -270,10 +270,10 @@
 
   <div id="resultSection" class="result-section" style="display:none;">
     <div class="result-header">
-      <h2 id="resultTitle" style="font-size:0.95rem;font-weight:600;">검색 결과</h2>
+      <h2 id="resultTitle" style="font-size:0.95rem;font-weight:600;">Results</h2>
       <div class="copy-actions">
-        <button class="btn btn-secondary btn-sm" onclick="copyTsv()">TSV 전체 복사</button>
-        <button class="btn btn-secondary btn-sm" onclick="copyPnColumn()">PN 열 복사</button>
+        <button class="btn btn-secondary btn-sm" onclick="copyTsv()">Copy All (TSV)</button>
+        <button class="btn btn-secondary btn-sm" onclick="copyPnColumn()">Copy PN Column</button>
       </div>
     </div>
     <div class="table-wrapper">
@@ -309,7 +309,7 @@
     </p>
     <ul style="font-size:0.9rem;color:#495057;margin-left:20px;margin-bottom:20px;">
       <li>Automatic recognition of various expressions like "10k", "10,000", "10k ohm"</li>
-      <li>GLM AI NLP to infer and handle typos or missing units</li>
+      <li>AI NLP to infer and handle typos or missing units</li>
       <li>Achieves over 99% recognition rate based on Regex parsing</li>
     </ul>
 
@@ -335,7 +335,7 @@
     <div style="margin-bottom:16px;">
       <h3 style="font-size:1rem;font-weight:600;margin-bottom:6px;">Q: Can conversion work if the resistor value data extracted from the circuit diagram is corrupted?</h3>
       <p style="font-size:0.9rem;color:#495057;">
-        Yes, GLM AI natural language processing is applied to accurately interpret the correct resistor value and match the part number,
+        Yes, AI natural language processing is applied to accurately interpret the correct resistor value and match the part number,
         even with typos, spaces, or incorrect unit notations, by understanding the context.
       </p>
     </div>
@@ -392,7 +392,7 @@
   // ── 단건 검색 ────────────────────────────────────────
   async function handleSearch() {
     var input = document.getElementById('specInput').value.trim();
-    if (!input) { showStatus('입력값을 입력하세요.', 'error'); return; }
+    if (!input) { showStatus('Please enter a resistor spec.', 'error'); return; }
 
     setLoading(true);
     results = [];
@@ -401,9 +401,9 @@
       var row = await callWorker(input);
       results = [row];
       renderTable(results);
-      showStatus('검색 완료', 'success');
+      showStatus('Search complete.', 'success');
     } catch (e) {
-      showStatus('오류: ' + e.message, 'error');
+      showStatus('Error: ' + e.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -414,11 +414,11 @@
   async function handleBatchSearch() {
     var raw = document.getElementById('batchInput').value;
     var lines = raw.split('\n').map(function(l) { return l.trim(); }).filter(Boolean);
-    if (lines.length === 0) { showStatus('입력값을 입력하세요.', 'error'); return; }
+    if (lines.length === 0) { showStatus('Please enter at least one spec.', 'error'); return; }
 
     setLoading(true);
     results = [];
-    showStatus('0 / ' + lines.length + ' 처리 중...', 'loading');
+    showStatus('Processing 0 / ' + lines.length + '...', 'loading');
 
     for (var i = 0; i < lines.length; i++) {
       try {
@@ -434,11 +434,11 @@
           validation: 'EXTRACTION_INVALID', mouser_url: null,
         });
       }
-      showStatus((i + 1) + ' / ' + lines.length + ' 처리 중...', 'loading');
+      showStatus('Processing ' + (i + 1) + ' / ' + lines.length + '...', 'loading');
     }
 
     renderTable(results);
-    showStatus(lines.length + '개 처리 완료', 'success');
+    showStatus(lines.length + ' item' + (lines.length !== 1 ? 's' : '') + ' complete.', 'success');
     setLoading(false);
   }
   window.handleBatchSearch = handleBatchSearch;
@@ -494,7 +494,7 @@
       tbody.appendChild(tr);
     });
 
-    document.getElementById('resultTitle').textContent = '검색 결과 (' + rows.length + '건)';
+    document.getElementById('resultTitle').textContent = 'Results (' + rows.length + ' item' + (rows.length !== 1 ? 's' : '') + ')';
     document.getElementById('resultSection').style.display = 'block';
   }
 
@@ -504,13 +504,13 @@
       ? '<a class="pn-link" href="' + esc(url) + '" target="_blank" rel="noopener">' + esc(pn) + '</a>'
       : '<span class="pn-link">' + esc(pn) + '</span>';
     return '<div class="pn-cell">' + linkHtml +
-      '<button class="copy-icon" onclick="copySinglePn(\'' + esc(pn) + '\')" title="복사">복사</button>' +
+      '<button class="copy-icon" onclick="copySinglePn(\'' + esc(pn) + '\')" title="Copy">Copy</button>' +
       '</div>';
   }
 
   function buildValidationBadge(status) {
     if (status === 'PASS') return '<span class="badge badge-pass">PASS</span>';
-    if (status === 'PASS_UNVERIFIED') return '<span class="badge badge-warn" title="역검증 불가 (Description 파싱 실패) — 검색 키워드로 1차 필터됨">PASS*</span>';
+    if (status === 'PASS_UNVERIFIED') return '<span class="badge badge-warn" title="Verification not possible (Description parse failed) — keyword search filter applied">PASS*</span>';
     var failCodes = ['RESISTANCE_NOT_FOUND', 'NO_CANDIDATES', 'VERIFICATION_FAILED'];
     if (failCodes.indexOf(status) !== -1) return '<span class="badge badge-fail">' + status + '</span>';
     return '<span class="badge badge-warn">' + status + '</span>';
@@ -518,14 +518,14 @@
 
   // ── 복사 기능 ────────────────────────────────────────
   function copySinglePn(pn) {
-    copyText(pn, 'Part Number 복사됨: ' + pn);
+    copyText(pn, 'Copied PN: ' + pn);
   }
   window.copySinglePn = copySinglePn;
 
   function copyPnColumn() {
     if (results.length === 0) return;
     var pns = results.map(function(r) { return r.mouser_pn || '-'; }).join('\n');
-    copyText(pns, 'PN 열 복사됨 (' + results.length + '개)');
+    copyText(pns, 'PN column copied (' + results.length + ' item' + (results.length !== 1 ? 's' : '') + ')');
   }
   window.copyPnColumn = copyPnColumn;
 
@@ -545,7 +545,7 @@
         r.validation,
       ].join('\t'));
     });
-    copyText(rows.join('\n'), 'TSV 복사됨 (' + results.length + '행)');
+    copyText(rows.join('\n'), 'TSV copied (' + results.length + ' row' + (results.length !== 1 ? 's' : '') + ')');
   }
   window.copyTsv = copyTsv;
 
@@ -568,7 +568,7 @@
   function setLoading(on) {
     document.getElementById('searchBtn').disabled = on;
     if (on) {
-      showStatus('검색 중...', 'loading');
+      showStatus('Searching...', 'loading');
     }
   }
 
