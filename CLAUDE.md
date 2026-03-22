@@ -54,7 +54,8 @@
 |---|---|---|
 | 스펙 추출 규칙 | `/rules/spec_extraction_rules.md` | 저항 표기 패턴, 파서 우선순위, 신뢰도 계산 상세 |
 | GLM API 계약 | `/docs/glm_api_contract.md` | GLM API 입출력 스키마, 프롬프트 패턴, 시행착오 기록 |
-| Mouser 스펙 DB | `/db/mouser_resistor_specs.json` | 최초 1회 수집한 저항 스펙 값 목록 |
+| Mouser 스펙 DB (집계) | `/db/mouser_resistor_specs.json` | 최초 1회 수집한 저항 스펙 집계 값 목록 |
+| Mouser 원본 부품 DB | `/db/mouser_parts_raw.json` | 최초 1회 수집한 개별 부품 레코드 745건 |
 | Mouser DB 수집 가이드 | `/docs/mouser_db_guide.md` | 1회 수집 절차, API 동작 특성, 시행착오 기록 |
 | Mouser DB 현황 | `/db/db_status.md` | 수집 현황, 품질 분석, 활용 현황 (수집 후 갱신 필수) |
 | Blogger HTML 규칙 | `/rules/blogger_html_rules.md` | 배포 후 에러 발생 시마다 갱신하는 성장형 규칙 |
@@ -94,7 +95,8 @@
 │   ├── power_alias_map.json
 │   └── blogger_html_rules.md
 ├── /db
-│   ├── mouser_resistor_specs.json      ← 최초 1회 수집 저항 스펙 DB
+│   ├── mouser_resistor_specs.json      ← 최초 1회 수집 저항 스펙 집계 DB
+│   ├── mouser_parts_raw.json           ← 최초 1회 수집 원본 부품 레코드 DB (745건)
 │   ├── collection_metadata.json        ← 수집 일시, 범위, 버전 정보
 │   └── db_status.md                    ← DB 현황, 품질 분석, 수집 이력 (수집 후 갱신 필수)
 ├── /docs
